@@ -1,0 +1,11 @@
+Une ressource docker-compose « {{ deployment.template.name }} » a été mise à disposition pour ton workspace « {{ workspace.id }} ».
+
+{{ deployment.template.description }}
+Version : {{ deployment.template.version }}{% if deployment.template.tags %} — tags : {{ deployment.template.tags | join(', ') }}{% endif %}
+Déploiement : {{ deployment.id }} (statut : {{ deployment.status }})
+
+Ports exposés (hôte {{ host.ip }}, alias SSH {{ host.ssh_alias }}) :
+{% for name, port in deployment.ports.items() -%}
+- {{ name }} : {{ host.ip }}:{{ port }}
+{% endfor %}
+Mise à disposition le {{ started_at }}.

@@ -1,0 +1,9 @@
+Une machine de test a été mise à disposition pour ton workspace « {{ workspace.id }} ».
+
+- Nom du host : {{ host.name }}
+- Accès SSH : `ssh {{ host.ssh_alias }}` (soit {{ host.ssh_user }}@{{ host.ip }}:{{ host.ssh_port }})
+
+Cette machine héberge Docker : tu peux y déployer et y tester des services.
+Connecte-toi via l'alias SSH « {{ host.ssh_alias }} » — il est déjà configuré dans ton workspace.
+
+Mise à disposition le {{ created_at }}.

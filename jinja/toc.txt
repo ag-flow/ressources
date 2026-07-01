@@ -1,0 +1,2 @@
+test_host_available.fr.j2 | test_host_available | fr | Machine de test mise à disposition
+compose_resource_available.fr.j2 | compose_resource_available | fr | Ressource docker-compose mise à disposition
