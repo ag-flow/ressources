@@ -1,4 +1,4 @@
-test_host_available.fr.j2 | test_host_available | fr | Machine de test mise a disposition
+test_host_available.fr.j2 | test_host_available | fr | Machine de test mise à disposition
 test_host_available.en.j2 | test_host_available | en | Test host available message
 service-docker-compose.fr.j2 | service-docker-compose | fr | Ressource docker-compose mise à disposition
 service-docker-compose.en.j2 | service-docker-compose | en | Docker-compose resource available message
