@@ -1,5 +1,6 @@
 aider/
 ansible/
+claude-bypass-permissions/
 claude-code/
 codex/
 cpp/
