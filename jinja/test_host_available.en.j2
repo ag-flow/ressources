@@ -1,0 +1,9 @@
+A test machine has been made available for your workspace "{{ workspace.id }}".
+
+- Host name: {{ host.name }}
+- SSH access: `ssh {{ host.ssh_alias }}` (i.e. {{ host.ssh_user }}@{{ host.ip }}:{{ host.ssh_port }})
+
+This machine runs Docker: you can deploy and test services on it.
+Connect via the SSH alias "{{ host.ssh_alias }}" — it is already configured in your workspace.
+
+Made available on {{ created_at }}.
