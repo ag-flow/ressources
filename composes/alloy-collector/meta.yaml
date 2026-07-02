@@ -1,0 +1,13 @@
+id: alloy-collector
+name: Collecteur de logs (Alloy)
+description: >-
+  Collecte les logs Docker et journald du host et les pousse vers Loki.
+  Variables LOKI_URL/HOSTNAME/MODULE/ROLE injectées par le portail.
+version: "1"
+tags:
+  - observabilité
+  - logs
+image: grafana/alloy:v1.5.1
+parameters: []
+extra_files:
+  - config.alloy

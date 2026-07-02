@@ -1,2 +1,3 @@
+alloy-collector/
 browserless-chromium/
 searxng/
