@@ -17,7 +17,7 @@ parameters:
       URL de l'instance SonarQube self-hosted (ex. http://sonarqube.lan:9000).
       Ne pas utiliser pour SonarQube Cloud (SONARQUBE_URL doit alors valoir
       https://sonarqube.us ou https://sonarcloud.io — hors périmètre ici).
-    type: text
+    type: string
     required: true
     default: ""
   - key: SONARQUBE_TOKEN
@@ -34,7 +34,7 @@ parameters:
     description: >-
       Liste séparée par des virgules (ex. analysis,issues,quality-gates).
       Vide = tous les toolsets. Le toolset "projects" est toujours actif.
-    type: text
+    type: string
     required: false
     default: "analysis,issues,quality-gates"
   - key: SONARQUBE_READ_ONLY
@@ -42,6 +42,6 @@ parameters:
     description: >-
       true = désactive toutes les actions d'écriture (changement de statut
       d'issue, etc.). Filtre cumulatif avec SONARQUBE_TOOLSETS.
-    type: text
+    type: bool
     required: false
     default: "false"
