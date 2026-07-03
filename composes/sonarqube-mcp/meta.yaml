@@ -1,0 +1,47 @@
+id: sonarqube-mcp
+name: SonarQube MCP Server
+description: >-
+  Serveur MCP officiel SonarSource. Expose l'API SonarQube (issues, quality
+  gates, measures, hotspots) aux agents via Streamable HTTP. Adaptateur
+  stateless, aucun volume — pointe vers une instance SonarQube existante.
+version: "1"
+tags:
+  - devsecops
+  - sonarqube
+  - mcp
+image: sonarsource/sonarqube-mcp:latest
+parameters:
+  - key: SONARQUBE_URL
+    label: "URL du serveur SonarQube"
+    description: >-
+      URL de l'instance SonarQube self-hosted (ex. http://sonarqube.lan:9000).
+      Ne pas utiliser pour SonarQube Cloud (SONARQUBE_URL doit alors valoir
+      https://sonarqube.us ou https://sonarcloud.io — hors périmètre ici).
+    type: text
+    required: true
+    default: ""
+  - key: SONARQUBE_TOKEN
+    label: "Token SonarQube"
+    description: >-
+      Token d'un compte de service dédié (pas un token personnel) — c'est
+      l'identité partagée utilisée par tous les agents via ce serveur MCP.
+    type: secret
+    required: true
+    default: ""
+    secret_ref_hint: "sonarqube-mcp/token"
+  - key: SONARQUBE_TOOLSETS
+    label: "Toolsets activés"
+    description: >-
+      Liste séparée par des virgules (ex. analysis,issues,quality-gates).
+      Vide = tous les toolsets. Le toolset "projects" est toujours actif.
+    type: text
+    required: false
+    default: "analysis,issues,quality-gates"
+  - key: SONARQUBE_READ_ONLY
+    label: "Lecture seule"
+    description: >-
+      true = désactive toutes les actions d'écriture (changement de statut
+      d'issue, etc.). Filtre cumulatif avec SONARQUBE_TOOLSETS.
+    type: text
+    required: false
+    default: "false"

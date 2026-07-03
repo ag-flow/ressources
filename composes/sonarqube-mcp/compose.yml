@@ -1,0 +1,19 @@
+services:
+  sonarqube-mcp:
+    image: sonarsource/sonarqube-mcp:latest
+    init: true
+    restart: unless-stopped
+    ports:
+      - sonarqube-mcp>8080:8080
+    environment:
+      # Streamable HTTP non chiffré : accepté ici car le service n'est joignable
+      # que depuis la passerelle MCP interne (Tailscale/réseau local), jamais
+      # exposé publiquement. Passer en https (SONARQUBE_TRANSPORT=https +
+      # keystore monté) le jour où ce n'est plus vrai.
+      SONARQUBE_TRANSPORT: http
+      SONARQUBE_HTTP_HOST: "0.0.0.0"
+      SONARQUBE_HTTP_PORT: "8080"
+      SONARQUBE_URL: "${SONARQUBE_URL}"
+      SONARQUBE_TOKEN: "${SONARQUBE_TOKEN}"
+      SONARQUBE_TOOLSETS: "${SONARQUBE_TOOLSETS}"
+      SONARQUBE_READ_ONLY: "${SONARQUBE_READ_ONLY}"

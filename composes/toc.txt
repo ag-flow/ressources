@@ -1,3 +1,4 @@
 alloy-collector/
 browserless-chromium/
 searxng/
+sonarqube-mcp/
