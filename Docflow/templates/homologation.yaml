@@ -1,0 +1,137 @@
+# Docflow/templates/homologation.yaml — v1
+# Structure clonée dans un workspace par l'import. Idempotent, additive, versionnée.
+# Aucun UUID : tout est par slug. Cf. Docflow/templates/CLAUDE.md §8 pour le contrat complet.
+#
+# Objectif : tracer la décision d'homologation (validation formelle avant merge/mise en prod)
+# d'un développement, en agrégeant le verdict des contrôles automatiques (qualité, sécurité,
+# fonctionnel) et la décision humaine finale — sans dupliquer ces contrôles, seulement leur
+# résultat. Une instance = une évaluation d'un commit/tag donné.
+#
+# Couplage volontaire (cf. convention §8.5/8.10 du CLAUDE.md) : la propriété `validateur`
+# référence le type `personne` défini dans agile-basic.yaml. Importer agile-basic.yaml AVANT
+# (ou en même temps que) ce template dans le workspace cible. Si `personne` est absent au
+# moment de l'import, la structure s'importe quand même (résolution du target_type différée à
+# l'écriture d'une valeur, §8.5) mais le champ `validateur` ne sera utilisable qu'une fois
+# `personne` présent dans le workspace.
+version: 1
+template: homologation
+label: "Homologation de développement"
+
+functional_types:
+
+  - slug: homologation
+    parent: null
+    label: Homologation
+    content_template: |
+      # {{title}}
+      > Homologation ouverte le {{date}}
+
+      ## Périmètre
+      Commit / tag évalué :
+
+      ## Résultats des contrôles automatiques
+      - Qualité (SonarQube) :
+      - Sécurité statique (Semgrep) :
+      - Vulnérabilités (Trivy) :
+      - Tests fonctionnels (test1) :
+
+      ## Décision
+      ## Justification (si dérogation)
+    properties:
+      - slug: statut
+        label: Statut
+        type: restricted_list
+        required: true
+        default: soumis
+        allowed_values:
+          - { slug: soumis,             label: "Soumis",              position: 0, color: "#9AA3AF" }
+          - { slug: analyse_auto,       label: "Analyse automatique", position: 1, color: "#0EA5E9" }
+          - { slug: tests_fonctionnels, label: "Tests fonctionnels",  position: 2, color: "#0EA5E9" }
+          - { slug: revue_humaine,      label: "Revue humaine",       position: 3, color: "#F59E0B" }
+          - { slug: homologue,          label: "Homologué",           position: 4, color: "#22C55E" }
+          - { slug: rejete,             label: "Rejeté",              position: 5, color: "#EF4444" }
+
+      - slug: projet
+        label: "Projet"
+        type: text
+        required: true
+
+      - slug: commit_sha
+        label: "Commit"
+        type: text
+        required: true
+        constraints:
+          - { kind: pattern, value: "^[0-9a-f]{7,40}$", message: "SHA git attendu (7 à 40 caractères hexadécimaux)" }
+
+      - slug: version_ou_tag
+        label: "Version / tag"
+        type: text
+        required: false
+
+      - slug: gate_qualite
+        label: "Gate qualité (SonarQube)"
+        type: restricted_list
+        required: true
+        default: non_execute
+        allowed_values:
+          - { slug: non_execute, label: "Non exécuté", position: 0, color: "#9AA3AF" }
+          - { slug: ok,          label: "OK",           position: 1, color: "#22C55E" }
+          - { slug: echec,       label: "Échec",        position: 2, color: "#EF4444" }
+
+      - slug: gate_semgrep
+        label: "Analyse statique sécurité (Semgrep)"
+        type: restricted_list
+        required: true
+        default: non_execute
+        allowed_values:
+          - { slug: non_execute, label: "Non exécuté", position: 0, color: "#9AA3AF" }
+          - { slug: ok,          label: "OK",           position: 1, color: "#22C55E" }
+          - { slug: echec,       label: "Échec",        position: 2, color: "#EF4444" }
+
+      - slug: gate_trivy
+        label: "Vulnérabilités dépendances/images (Trivy)"
+        type: restricted_list
+        required: true
+        default: non_execute
+        allowed_values:
+          - { slug: non_execute, label: "Non exécuté", position: 0, color: "#9AA3AF" }
+          - { slug: ok,          label: "OK",           position: 1, color: "#22C55E" }
+          - { slug: echec,       label: "Échec",        position: 2, color: "#EF4444" }
+
+      - slug: gate_fonctionnel
+        label: "Tests fonctionnels (test1)"
+        type: restricted_list
+        required: true
+        default: non_execute
+        allowed_values:
+          - { slug: non_execute, label: "Non exécuté", position: 0, color: "#9AA3AF" }
+          - { slug: ok,          label: "OK",           position: 1, color: "#22C55E" }
+          - { slug: echec,       label: "Échec",        position: 2, color: "#EF4444" }
+
+      - slug: lien_ci
+        label: "Lien vers le run CI"
+        type: text
+        required: false
+
+      - slug: validateur
+        label: "Validé par"
+        type: reference
+        target_type: personne
+        required: false
+
+      - slug: date_decision
+        label: "Date de décision"
+        type: date
+        required: false
+
+      - slug: justification_derogation
+        label: "Justification (dérogation)"
+        type: text
+        required: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Rappel (non modélisé ici) : ce template ne porte aucune règle de transition
+# entre statuts (qui peut homologuer, quel gate bloque quoi) — c'est l'affaire
+# d'un futur module workflow ou de l'automation engine côté docflow, pas de la
+# structure. Ce template stocke le verdict, pas la logique qui y mène.
+# ─────────────────────────────────────────────────────────────────────────────
