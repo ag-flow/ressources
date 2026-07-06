@@ -30,5 +30,10 @@ curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
 rm /tmp/get-pip.py
 "python${VERSION}" -m pip install --upgrade pip setuptools wheel
 
+# Outillage de test — pytest installé à la suite de Python
+echo "==> Installation de pytest"
+"python${VERSION}" -m pip install --no-cache-dir pytest
+
 echo "==> Python ${VERSION} installé : $(python3 --version)"
 echo "==> pip : $(pip3 --version)"
+echo "==> pytest : $(python3 -m pytest --version)"
