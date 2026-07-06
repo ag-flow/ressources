@@ -1,5 +1,6 @@
 name: Python Dev
 description: Python 3.12+ — IntelliSense, Ruff (lint+format), debugpy, mypy
+image: mcr.microsoft.com/devcontainers/python:3.12
 extensions:
   - ms-python.python
   - ms-python.debugpy

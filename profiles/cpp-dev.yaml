@@ -1,5 +1,6 @@
 name: C/C++ Dev
 description: C & C++ — IntelliSense, débogueur, CMake, C++20 / C17
+image: mcr.microsoft.com/devcontainers/cpp:ubuntu
 extensions:
   - ms-vscode.cpptools
   - ms-vscode.cmake-tools

@@ -1,5 +1,6 @@
 name: Terraform / IaC
 description: Terraform & HCL — language server HashiCorp, format auto, validation
+image: mcr.microsoft.com/devcontainers/base:ubuntu
 extensions:
   - hashicorp.terraform
   - hashicorp.hcl

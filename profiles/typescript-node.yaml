@@ -1,5 +1,6 @@
 name: TypeScript / Node.js
 description: TypeScript & Node.js — ESLint, Prettier, npm IntelliSense, Error Lens
+image: mcr.microsoft.com/devcontainers/typescript-node:22
 extensions:
   - dbaeumer.vscode-eslint
   - esbenp.prettier-vscode

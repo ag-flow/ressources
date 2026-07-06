@@ -1,5 +1,6 @@
 name: Ansible
 description: Ansible — Red Hat extension, lint, autocomplétion, YAML intégré
+image: mcr.microsoft.com/devcontainers/base:ubuntu
 extensions:
   - redhat.ansible
   - redhat.vscode-yaml

@@ -1,5 +1,6 @@
 name: Ruby Dev
 description: Ruby — Ruby LSP (Shopify), débogueur rdbg, format auto
+image: mcr.microsoft.com/devcontainers/ruby:3.3
 extensions:
   - Shopify.ruby-lsp
   - KoichiSasada.vscode-rdbg

@@ -1,5 +1,6 @@
 name: .NET Dev
 description: C# / F# — C# Dev Kit, IntelliCode, tests, débogueur intégré
+image: mcr.microsoft.com/devcontainers/dotnet:8.0
 extensions:
   - ms-dotnettools.csdevkit
   - ms-dotnettools.csharp

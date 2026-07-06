@@ -1,5 +1,6 @@
 name: Java Dev
 description: Java — Language Support, débogueur, tests, Maven, gestion des dépendances
+image: mcr.microsoft.com/devcontainers/java:21
 extensions:
   - redhat.java
   - vscjava.vscode-java-debug

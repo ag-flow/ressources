@@ -167,20 +167,39 @@ go-dev.yaml | Go Dev | Go 1.22+ — gopls, Delve, tests | 1
 
 ### 3.2 Fichier profil `<filename>.yaml`
 
-Modèle `ProfileBody` (`extra` interdit) :
+Modèle `ProfileBody` (`extra` interdit → **toute clé hors de cette liste fait échouer
+l'import** — pas de champ supplémentaire, même « inoffensif ») :
 
-| Champ | Type | Règles |
-|-------|------|--------|
-| `name` | str | 1–80 car., `^[\w\s\-+.]{1,80}$`. **Sert à dériver le slug** (conflit → 409 à l'import) |
-| `description` | str | libre |
-| `extensions` | list[str] | IDs d'extensions marketplace (ex. `ms-python.python`) |
-| `settings` | map | settings VS Code arbitraires |
+| Champ | Type | Requis | Règles |
+|-------|------|--------|--------|
+| `name` | str | **oui** | 1–80 car., `^[\w\s\-+.]{1,80}$`. **Sert à dériver le slug** (conflit → 409 à l'import) |
+| `description` | str | non | libre |
+| `image` | str | non | **image de base du devcontainer** (référence OCE — voir contrat ci-dessous). Vide/absent = image par défaut du portail |
+| `extensions` | list[str] | non | IDs d'extensions marketplace (ex. `ms-python.python`) |
+| `settings` | map | non | settings VS Code arbitraires |
+
+**Contrat du champ `image`** :
+
+- **Référence OCI stricte** : `[registre[:port]/]chemin[:tag][@sha256:…]`. Le chemin est en
+  **minuscules**, aucune valeur ne commence par `-`, longueur totale **≤ 400 caractères**.
+  Exemple : `mcr.microsoft.com/devcontainers/python:3.12`. Regex de validation :
+
+  ```
+  ^[a-z0-9][a-z0-9._-]*(:[0-9]{1,5})?(/[a-z0-9][a-z0-9._-]*)*(:[A-Za-z0-9_][A-Za-z0-9._-]{0,127})?(@sha256:[a-f0-9]{64})?$
+  ```
+
+- **Vide ou absent** = image par défaut du portail (`mcr.microsoft.com/devcontainers/base:ubuntu`).
+- **Sémantique** : le workspace **démarre** sur cette image ; les recettes (§2) ne doivent
+  installer que ce qui **manque** à l'image. Choisir une image déjà outillée et cohérente avec
+  le profil évite des installations longues au premier démarrage.
+- **Toujours pinner un tag majeur explicite** (`python:3.12`, jamais `latest`).
 
 Exemple `profiles/python-dev.yaml` :
 
 ```yaml
 name: Python Dev
 description: Python 3.12+ — Ruff, debugpy, mypy
+image: mcr.microsoft.com/devcontainers/python:3.12
 extensions:
   - ms-python.python
   - ms-python.vscode-pylance
@@ -191,7 +210,9 @@ settings:
   python.analysis.typeCheckingMode: basic
 ```
 
-Le champ `extension_count` du `toc.txt` doit refléter `len(extensions)` (ici 4).
+Le champ `extension_count` du `toc.txt` doit refléter `len(extensions)` (ici 4). Le format des
+lignes de `profiles/toc.txt` **ne change pas** : l'`image` n'y figure pas, elle est lue dans le
+YAML à l'import.
 
 ---
 

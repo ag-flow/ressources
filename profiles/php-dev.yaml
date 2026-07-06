@@ -1,5 +1,6 @@
 name: PHP Dev
 description: PHP 8.3+ — Intelephense (LSP), Xdebug, PHPDoc
+image: mcr.microsoft.com/devcontainers/php:8.3
 extensions:
   - bmewburn.vscode-intelephense-client
   - xdebug.php-debug

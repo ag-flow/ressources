@@ -1,5 +1,6 @@
 name: Kubernetes / Helm
 description: Kubernetes & Helm — kubectl, manifests, schémas YAML, port-forward intégré
+image: mcr.microsoft.com/devcontainers/base:ubuntu
 extensions:
   - ms-kubernetes-tools.vscode-kubernetes-tools
   - redhat.vscode-yaml

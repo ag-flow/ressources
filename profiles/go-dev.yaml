@@ -1,5 +1,6 @@
 name: Go Dev
 description: Go 1.22+ — gopls, débogueur Delve, goimports, tests intégrés
+image: mcr.microsoft.com/devcontainers/go:1.22
 extensions:
   - golang.Go
 settings:

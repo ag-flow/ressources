@@ -1,5 +1,6 @@
 name: Swift Dev
 description: Swift — SourceKit-LSP, débogueur intégré, Swift Package Manager
+image: mcr.microsoft.com/devcontainers/base:ubuntu
 extensions:
   - sswg.swift-lang
 settings:

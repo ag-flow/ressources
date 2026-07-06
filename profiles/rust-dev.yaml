@@ -1,5 +1,6 @@
 name: Rust Dev
 description: Rust — rust-analyzer, CodeLLDB, crates.io, TOML
+image: mcr.microsoft.com/devcontainers/rust:1
 extensions:
   - rust-lang.rust-analyzer
   - vadimcn.vscode-lldb
