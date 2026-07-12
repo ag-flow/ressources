@@ -1,4 +1,4 @@
-# templates/agile-basic.yaml — v2
+# templates/agile-basic.yaml — v3
 # Structure clonée dans un workspace par l'import. Idempotent, additif, versionné.
 # Aucun UUID : tout est par slug. L'héritage (inherit/abstract) est résolu À L'IMPORT
 # et n'existe JAMAIS en base — la base ne connaît que des types concrets à plat.
@@ -8,10 +8,15 @@
 #   - propriété `reference` (cible typée) .................... 38_MREL
 #   - multi-valeur via `max_occurrences` (défaut 1 = mono) ... 39_MMV
 #   - modèle de contenu par type (`content_template`) ........ 35_MTPL
+# Évolution v2 -> v3 : ajoute un statut initial « Nouveau » (état de création, avant
+# prise en charge) sur `base_statusable`, promu valeur par défaut. NON additif au sens
+# strict du diff (le `default` change) — assumé ici : aucun workspace ne consomme
+# encore cette v2 en pratique. Un workspace ayant déjà importé la v2 verra cet import
+# bloqué en conflit tant qu'il n'a pas migré manuellement.
 # Rappel de frontière : les pipelines de statut sont PROPRES À CHAQUE TYPE
 # (un board `group_by statut` est cohérent par type, pas cross-type). docflow ne
 # porte AUCUNE règle de transition — c'est l'affaire du futur module workflow.
-version: 2
+version: 3
 template: agile-basic
 label: "Projet agile (epic / feature / story / atdd / bug / enabler)"
 
@@ -26,12 +31,13 @@ functional_types:
         label: Statut
         type: restricted_list
         required: true
-        default: a_faire
+        default: nouveau
         allowed_values:
-          - { slug: a_faire,   label: "À faire",   position: 0, color: "#9AA3AF" }
-          - { slug: en_cours,  label: "En cours",  position: 1, color: "#0EA5E9" }
-          - { slug: en_review, label: "En review", position: 2, color: "#F59E0B" }
-          - { slug: done,      label: "Done",      position: 3, color: "#22C55E" }
+          - { slug: nouveau,   label: "Nouveau",   position: 0, color: "#9AA3AF" }
+          - { slug: a_faire,   label: "À faire",   position: 1, color: "#6366F1" }
+          - { slug: en_cours,  label: "En cours",  position: 2, color: "#0EA5E9" }
+          - { slug: en_review, label: "En review", position: 3, color: "#F59E0B" }
+          - { slug: done,      label: "Done",      position: 4, color: "#22C55E" }
 
   # ─── PERSONNE : cible des références assignee / reviewers ───
   # Un type "annuaire" minimal, sans statut. Il EXISTE pour que les propriétés
@@ -69,12 +75,13 @@ functional_types:
         label: Statut
         type: restricted_list
         required: true
-        default: a_cadrer
+        default: nouveau
         allowed_values:
-          - { slug: a_cadrer, label: "À cadrer", position: 0, color: "#9AA3AF" }
-          - { slug: cadre,    label: "Cadré",    position: 1, color: "#6366F1" }
-          - { slug: en_cours, label: "En cours", position: 2, color: "#0EA5E9" }
-          - { slug: done,     label: "Done",     position: 3, color: "#22C55E" }
+          - { slug: nouveau,  label: "Nouveau",  position: 0, color: "#9AA3AF" }
+          - { slug: a_cadrer, label: "À cadrer", position: 1, color: "#6B7280" }
+          - { slug: cadre,    label: "Cadré",    position: 2, color: "#6366F1" }
+          - { slug: en_cours, label: "En cours", position: 3, color: "#0EA5E9" }
+          - { slug: done,     label: "Done",     position: 4, color: "#22C55E" }
       - slug: budget_jours
         label: "Budget (jours)"
         type: int
@@ -105,12 +112,13 @@ functional_types:
         label: Statut
         type: restricted_list
         required: true
-        default: pret_pour_dev
+        default: nouveau
         allowed_values:
-          - { slug: pret_pour_dev, label: "Prêt pour dev", position: 0, color: "#6366F1" }
-          - { slug: en_dev,        label: "En dev",        position: 1, color: "#0EA5E9" }
-          - { slug: en_review,     label: "En review",     position: 2, color: "#F59E0B" }
-          - { slug: done,          label: "Done",          position: 3, color: "#22C55E" }
+          - { slug: nouveau,       label: "Nouveau",       position: 0, color: "#9AA3AF" }
+          - { slug: pret_pour_dev, label: "Prêt pour dev", position: 1, color: "#6366F1" }
+          - { slug: en_dev,        label: "En dev",        position: 2, color: "#0EA5E9" }
+          - { slug: en_review,     label: "En review",     position: 3, color: "#F59E0B" }
+          - { slug: done,          label: "Done",          position: 4, color: "#22C55E" }
       - slug: ref_jira
         label: "Référence Jira"
         type: text
@@ -206,13 +214,14 @@ functional_types:
         label: Statut
         type: restricted_list
         required: true
-        default: a_trier
+        default: nouveau
         allowed_values:
-          - { slug: a_trier,    label: "À trier",    position: 0, color: "#9AA3AF" }
-          - { slug: confirme,   label: "Confirmé",   position: 1, color: "#6366F1" }
-          - { slug: en_cours,   label: "En cours",   position: 2, color: "#0EA5E9" }
-          - { slug: done,       label: "Done",       position: 3, color: "#22C55E" }
-          - { slug: rejete,     label: "Rejeté",     position: 4, color: "#EF4444" }
+          - { slug: nouveau,    label: "Nouveau",    position: 0, color: "#9AA3AF" }
+          - { slug: a_trier,    label: "À trier",    position: 1, color: "#6B7280" }
+          - { slug: confirme,   label: "Confirmé",   position: 2, color: "#6366F1" }
+          - { slug: en_cours,   label: "En cours",   position: 3, color: "#0EA5E9" }
+          - { slug: done,       label: "Done",       position: 4, color: "#22C55E" }
+          - { slug: rejete,     label: "Rejeté",     position: 5, color: "#EF4444" }
       - slug: severite
         label: "Sévérité"
         type: restricted_list
