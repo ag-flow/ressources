@@ -1,0 +1,50 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pocket (heypocketai) — Webhooks",
+    "version": "1.0.0",
+    "summary": "Contrat des événements webhook émis par Pocket, pour déclaration comme source d'événements ENTRANTS (inbound) dans Workflow.",
+    "description": "Reconstruit à la main depuis la documentation publique https://docs.heypocketai.com/docs/api/webhooks (Pocket ne publie pas de spec OpenAPI machine-lisible). Livraison : POST application/json, User-Agent HeyPocket-Webhook/1.0, timeout 30s, 3 retries (backoff 1s-30s), garantie at-least-once (=> dédup obligatoire côté ingress). Signature : en-tête X-HeyPocket-Signature = HMAC-SHA256(secret, \"{timestamp}.{rawBody}\") et X-HeyPocket-Timestamp (unix ms) ; vérifier sur le corps BRUT avant parsing. Le secret est généré par Pocket (affiché une seule fois) : c'est un secret EXTERNE à référencer dans le coffre, pas un secret généré par Workflow."
+  },
+  "webhooks": {
+    "recording.created": { "post": { "summary": "Un enregistrement est créé ou uploadé", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "recording.created" } } } ] } } } }, "responses": { "200": { "description": "Acquittement rapide attendu (ack-then-process)." } } } },
+    "transcription.completed": { "post": { "summary": "La génération du transcript est terminée", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "transcription.completed" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "summary.completed": { "post": { "summary": "Post-traitement complet terminé (résumé, action items, tags) — DÉCLENCHEUR PRINCIPAL. Le payload porte transcript + résumé + action items.", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "summary.completed" } }, "required": [ "summarizations", "transcript" ] } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "summary.regenerated": { "post": { "summary": "Le paquet de résumé complet est régénéré", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "summary.regenerated" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "summary.updated": { "post": { "summary": "Le texte du résumé est régénéré", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "summary.updated" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "mind_map.completed": { "post": { "summary": "La génération de la mind map est terminée", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "mind_map.completed" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "action_items.regenerated": { "post": { "summary": "Les action items sont régénérés", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "action_items.regenerated" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "speakers.labeled": { "post": { "summary": "Les labels de locuteurs sont résolus dans le transcript", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "speakers.labeled" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "transcript.edited": { "post": { "summary": "Un utilisateur édite le texte du transcript ou les labels de locuteurs", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "transcript.edited" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "action_items.updated": { "post": { "summary": "Un utilisateur édite ou complète un action item", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "action_items.updated" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "recording.deleted": { "post": { "summary": "Un enregistrement est supprimé", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "recording.deleted" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "recording.merged": { "post": { "summary": "Deux enregistrements ou plus sont fusionnés", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "recording.merged" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } },
+    "translation.completed": { "post": { "summary": "La traduction du transcript est terminée", "requestBody": { "required": true, "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/PocketWebhookPayload" }, { "properties": { "event": { "const": "translation.completed" } } } ] } } } }, "responses": { "200": { "description": "OK" } } } }
+  },
+  "components": {
+    "securitySchemes": {
+      "PocketWebhookSignature": { "type": "apiKey", "in": "header", "name": "X-HeyPocket-Signature", "description": "HMAC-SHA256(secret, \"{X-HeyPocket-Timestamp}.{rawBody}\"). Secret généré par Pocket, à stocker dans le coffre comme secret externe." }
+    },
+    "schemas": {
+      "PocketWebhookPayload": {
+        "type": "object",
+        "required": [ "event", "timestamp", "user", "recording" ],
+        "properties": {
+          "event": { "type": "string", "description": "Type d'événement (ex. summary.completed)." },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/PocketUser" },
+          "organization": { "$ref": "#/components/schemas/PocketOrganization", "description": "Présent uniquement pour les livraisons scopées organisation (fan-out personnel + orgs)." },
+          "recording": { "$ref": "#/components/schemas/PocketRecording" },
+          "summarizations": { "type": "object", "description": "Map summarizationId -> objet de summarization. Présent pour summary.* et action_items.*.", "additionalProperties": { "$ref": "#/components/schemas/PocketSummarization" } },
+          "transcript": { "type": "array", "items": { "$ref": "#/components/schemas/PocketTranscriptSegment" } }
+        }
+      },
+      "PocketUser": { "type": "object", "required": [ "id" ], "properties": { "id": { "type": "string" }, "email": { "type": "string", "format": "email" } } },
+      "PocketOrganization": { "type": "object", "required": [ "id" ], "properties": { "id": { "type": "string" } } },
+      "PocketRecording": { "type": "object", "required": [ "id" ], "properties": { "id": { "type": "string", "description": "Identifiant stable de l'enregistrement (ex. rec_...). Base de la clé de dédup côté ingress." }, "title": { "type": "string" }, "description": { "type": "string" }, "duration": { "type": "integer", "description": "Durée en secondes." }, "language": { "type": "string" }, "createdAt": { "type": "string", "format": "date-time" } } },
+      "PocketTranscriptSegment": { "type": "object", "properties": { "speaker": { "type": "string" }, "text": { "type": "string" }, "start": { "type": "number", "description": "Début en secondes." }, "end": { "type": "number", "description": "Fin en secondes." } } },
+      "PocketSummarization": { "type": "object", "description": "Structure de summarization. Modélisée de façon permissive : les sous-objets profonds (v2, settings) varient.", "properties": { "id": { "type": "string" }, "summarizationId": { "type": "string" }, "processingStatus": { "type": "string" }, "autoInitiated": { "type": "boolean" }, "createdAt": { "type": "string", "format": "date-time" }, "updatedAt": { "type": "string", "format": "date-time" }, "settings": { "type": "object", "additionalProperties": true }, "v2": { "type": "object", "properties": { "summary": { "type": "object", "properties": { "title": { "type": "string" }, "emoji": { "type": "string" }, "markdown": { "type": "string" }, "bulletPoints": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": true }, "actionItems": { "type": "object", "properties": { "version": { "type": "string" }, "actionItems": { "type": "array", "items": { "$ref": "#/components/schemas/PocketActionItem" } } }, "additionalProperties": true } }, "additionalProperties": true } }, "additionalProperties": true },
+      "PocketActionItem": { "type": "object", "properties": { "id": { "type": "string" }, "parentTaskId": { "type": "string" }, "globalActionItemId": { "type": "string" }, "title": { "type": "string" }, "dueDate": { "type": "string" }, "status": { "type": "string", "description": "ex. TODO" }, "isCompleted": { "type": "boolean" } }, "additionalProperties": true }
+    }
+  }
+}
