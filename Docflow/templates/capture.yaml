@@ -1,0 +1,93 @@
+# Docflow/templates/capture.yaml — v1
+# Template docflow « capture » : dépôt de captations d'ag.flow workflow
+# (recordings Pocket, mails…). Types capture (racine) et capture_item (enfant).
+# Neutre projet, aucun UUID, tout par slug ; import idempotent et additif.
+# Cf. Docflow/templates/CLAUDE.md §8 pour le contrat complet.
+version: 1
+template: capture
+label: "Espace capture (capture / capture_item)"
+
+functional_types:
+
+  - slug: capture
+    parent: null
+    label: Capture
+    properties:
+      - slug: source
+        label: Source
+        type: restricted_list
+        required: true
+        allowed_values:
+          - { slug: pocket, label: Pocket, position: 0 }
+          - { slug: mail,   label: Mail,   position: 1 }
+          - { slug: web,    label: Web,    position: 2 }
+          - { slug: autre,  label: Autre,  position: 3 }
+      - slug: external_id
+        label: "Identifiant source"
+        type: text
+        required: true
+      - slug: kind
+        label: Nature
+        type: restricted_list
+        required: true
+        allowed_values:
+          - { slug: conversation, label: Conversation, position: 0 }
+          - { slug: mail,         label: Mail,         position: 1 }
+          - { slug: article,      label: Article,      position: 2 }
+          - { slug: autre,        label: Autre,        position: 3 }
+      - slug: occurred_at
+        label: "Survenu le"
+        type: date
+        required: true
+      - slug: ingested_at
+        label: "Déposé le"
+        type: date
+        required: true
+      - slug: title
+        label: Titre
+        type: text
+      - slug: participants
+        label: Participants
+        type: text
+      - slug: transcript
+        label: Transcription
+        type: text
+      - slug: summary
+        label: Résumé
+        type: text
+      - slug: raw_ref
+        label: "Réf. livraison brute"
+        type: text
+
+  - slug: capture_item
+    parent: capture
+    label: "Élément de capture"
+    properties:
+      - slug: kind
+        label: Nature
+        type: restricted_list
+        required: true
+        allowed_values:
+          - { slug: action_item, label: "Action à faire", position: 0 }
+          - { slug: attachment,  label: "Pièce jointe",    position: 1 }
+          - { slug: highlight,   label: "Surlignage",      position: 2 }
+          - { slug: autre,       label: "Autre",           position: 3 }
+      - slug: external_id
+        label: "Identifiant source"
+        type: text
+        required: true
+      - slug: content
+        label: Contenu
+        type: text
+        required: true
+      - slug: status
+        label: Statut
+        type: restricted_list
+        required: true
+        default: active
+        allowed_values:
+          - { slug: active,            label: "Actif",               position: 0, color: "#22C55E" }
+          - { slug: removed_at_source, label: "Retiré à la source",  position: 1, color: "#9AA3AF" }
+      - slug: due_date
+        label: "Échéance"
+        type: date
