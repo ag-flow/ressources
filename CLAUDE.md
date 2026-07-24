@@ -17,6 +17,30 @@ caractère près.
 
 ---
 
+## mcp
+
+Tu es connecté au mcp du protail devpod via le serveur claude-code
+
+## Backlog
+
+La gatway mcp propose une api pour se connecter à docflow
+docflow contient des workspaces qui contiennent des blocs de documents.
+workspace=ressources et bloc=Backlog tu as un backlog de tache à executer.
+
+- Quand on te demande de traiter le backlog tu te connectes Tu identifies les taches qui ne sont pas en status 'en review'
+- Quand tu prends une tache tu passes le statut à 'en cours'
+- Quand tu as finis tu passes le statut de la tache 'en review'.
+- Si la tâche le necessite tu rédiges les critères en ATDD.
+
+## Documentation
+
+La gatway mcp propose une api pour se connecter à docflow
+docflow contient des workspaces qui contiennent des blocs de documents.
+workspace=devpod et bloc=Documentation tu as un espace de stockage pour enregistrer et lire la doc.
+
+un espace de documentation globals cross projet (workspace=globals et bloc=Documentation) permet de lister les informations globals à tout les projets. A chaque fois que tu apprends quelques chose inscris le en article qui servira aux autres agents.
+
+
 ## 1. Principe commun des galeries
 
 Chaque type d'artefact vit dans **son répertoire**, avec un fichier d'index **`toc.txt`** :
