@@ -39,10 +39,6 @@ functional_types:
         label: "Survenu le"
         type: date
         required: true
-      - slug: ingested_at
-        label: "Déposé le"
-        type: date
-        required: true
       - slug: title
         label: Titre
         type: text
@@ -51,9 +47,6 @@ functional_types:
         type: text
       - slug: transcript
         label: Transcription
-        type: text
-      - slug: summary
-        label: Résumé
         type: text
       - slug: raw_ref
         label: "Réf. livraison brute"
@@ -68,18 +61,17 @@ functional_types:
         type: restricted_list
         required: true
         allowed_values:
-          - { slug: action_item, label: "Action à faire", position: 0 }
-          - { slug: attachment,  label: "Pièce jointe",    position: 1 }
-          - { slug: highlight,   label: "Surlignage",      position: 2 }
-          - { slug: autre,       label: "Autre",           position: 3 }
+          - { slug: resume,      label: "Résumé",          position: 0 }
+          - { slug: action_item, label: "Action à faire", position: 1 }
+          - { slug: attachment,  label: "Pièce jointe",    position: 2 }
+          - { slug: highlight,   label: "Surlignage",      position: 3 }
+          - { slug: autre,       label: "Autre",           position: 4 }
       - slug: external_id
         label: "Identifiant source"
         type: text
-        required: true
       - slug: content
         label: Contenu
         type: text
-        required: true
       - slug: status
         label: Statut
         type: restricted_list
