@@ -1,0 +1,12 @@
+id: copilot-cli
+key: 7218b556-ea9f-4bee-87e2-7c7aa134ebb8
+version: "1.0.0"
+description: "GitHub Copilot CLI — agent de terminal (auth device-flow OAuth avec la licence Copilot du dev, CLI seule)"
+type: install
+installs_after:
+  - 08d27187-d87f-4140-a65e-0891b59441f1
+memory-volume:
+  name: copilot-cli
+  optional: true
+  mapping:
+    target: /home/vscode/.copilot

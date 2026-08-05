@@ -1,0 +1,7 @@
+{
+  "id": "copilot-cli",
+  "version": "1.0.0",
+  "name": "GitHub Copilot CLI",
+  "description": "GitHub Copilot CLI — agent de terminal, auth device-flow avec la licence Copilot du dev (CLI seule, pas d'extension IDE)",
+  "installsAfter": ["./nodejs"]
+}
