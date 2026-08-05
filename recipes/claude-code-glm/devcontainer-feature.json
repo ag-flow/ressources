@@ -1,0 +1,7 @@
+{
+  "id": "claude-code-glm",
+  "version": "1.0.0",
+  "name": "Claude Code — profil GLM (Z.ai)",
+  "description": "Bascule claude-code sur GLM via l'endpoint anthropic de Z.ai (Coding Plan). Opt-in : sans cette recette, claude-code reste sur Anthropic natif.",
+  "installsAfter": ["./claude-code"]
+}

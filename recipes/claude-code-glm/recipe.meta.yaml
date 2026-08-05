@@ -1,0 +1,10 @@
+id: claude-code-glm
+key: 509496d7-7f5d-4073-9e71-2f4aa8e72cd9
+version: "1.0.0"
+description: "Profil GLM pour Claude Code — endpoint Z.ai anthropic (Coding Plan), opt-in"
+type: install
+installs_after:
+  - ff184539-18c7-4849-9ef3-943174113c49
+requires_secrets:
+  - path: llm/zai_coding_token
+    env: ANTHROPIC_AUTH_TOKEN

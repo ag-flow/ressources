@@ -1,6 +1,6 @@
 {
   "id": "aider",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Aider",
-  "description": "Install Aider — AI pair programmer en CLI (requiert Python)"
+  "description": "Install Aider — AI pair programmer en CLI, DeepSeek par défaut (requiert Python)"
 }

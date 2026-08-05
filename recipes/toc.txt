@@ -2,7 +2,9 @@ aider/
 ansible/
 claude-bypass-permissions/
 claude-code/
+claude-code-glm/
 codex/
+copilot-cli/
 cpp/
 docker/
 dotnet/

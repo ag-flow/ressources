@@ -45,3 +45,57 @@ PROFILE
 chmod +x /etc/profile.d/opencode-path.sh
 
 echo "==> OpenCode: $(opencode --version 2>/dev/null || echo 'installed')"
+
+# Config globale opencode (enabler 639f669c) — tranché : écrite par install.sh
+# (statique, secrets référencés en {env:…}, aucune valeur en clair) plutôt que
+# par template jinja (rien d'utilisateur-spécifique ici). OPENCODE_CONFIG la
+# désigne pour tous les shells ; un opencode.json de projet peut la surcharger.
+mkdir -p /etc/opencode
+cat > /etc/opencode/opencode.json <<'CONFIG'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "deepseek/deepseek-chat",
+  "provider": {
+    "deepseek": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "DeepSeek",
+      "options": {
+        "baseURL": "https://api.deepseek.com/v1",
+        "apiKey": "{env:DEEPSEEK_API_KEY}"
+      },
+      "models": {
+        "deepseek-chat": {},
+        "deepseek-reasoner": {}
+      }
+    },
+    "zai": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "GLM (Z.ai)",
+      "options": {
+        "baseURL": "https://api.z.ai/api/paas/v4",
+        "apiKey": "{env:ZAI_API_KEY}"
+      },
+      "models": {
+        "glm-5.2": {}
+      }
+    }
+  },
+  "mcp": {
+    "devpod": {
+      "type": "remote",
+      "url": "https://dev.yoops.org/mcp/",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:MCP_GATEWAY_TOKEN}"
+      }
+    }
+  }
+}
+CONFIG
+chmod 644 /etc/opencode/opencode.json
+cat > /etc/profile.d/opencode-config.sh <<'PROFILE'
+# opencode — config globale de la recette (providers + MCP gateway devpod).
+export OPENCODE_CONFIG="/etc/opencode/opencode.json"
+PROFILE
+chmod +x /etc/profile.d/opencode-config.sh
+echo "==> OpenCode: config providers (DeepSeek defaut, GLM) + MCP gateway ecrite dans /etc/opencode/opencode.json"

@@ -1,7 +1,14 @@
 ﻿id: opencode
 key: ab9e8afb-7cd9-4474-931b-c925345a28aa
-version: 1.0.0
-description: "Install OpenCode CLI — interface CLI pour LLMs (requiert Node.js)"
+version: 1.1.0
+description: "Install OpenCode CLI — MCP gateway devpod + providers DeepSeek/GLM (requiert Node.js)"
 type: install
 installs_after:
   - 08d27187-d87f-4140-a65e-0891b59441f1
+requires_secrets:
+  - path: llm/deepseek_api_key
+    env: DEEPSEEK_API_KEY
+  - path: llm/zai_api_key
+    env: ZAI_API_KEY
+  - path: mcp/gateway_token
+    env: MCP_GATEWAY_TOKEN
