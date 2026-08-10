@@ -1,0 +1,448 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Termix — API de gestion des utilisateurs",
+    "version": "1.0.0",
+    "description": "Contrat reconstruit à la main depuis la source Termix (github.com/Termix-SSH/Termix, src/backend/database/routes/user-admin-routes.ts et user-api-key-routes.ts) : Termix ne sert PAS de spec OpenAPI (elle n'est qu'un artefact CI, avec des servers en ports internes). On l'héberge donc ici. Surface couverte : création d'utilisateur local (cible de l'automate de synchro devpod→Termix) + clés API + gestion admin. Auth : Authorization: Bearer <token>, où <token> est soit un JWT de session admin, soit une clé API 'tmx_...' d'un compte admin (acceptée par le middleware d'auth). Toutes les opérations exigent un appelant ADMIN. Base publique via nginx : https://termix.yoops.org."
+  },
+  "servers": [
+    {
+      "url": "https://termix.yoops.org",
+      "description": "Instance Termix (derrière Caddy/Tunnel)"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "users",
+      "description": "Gestion des utilisateurs"
+    },
+    {
+      "name": "api-keys",
+      "description": "Clés API"
+    }
+  ],
+  "paths": {
+    "/users/admin-create": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "operationId": "adminCreateUser",
+        "summary": "Créer un utilisateur local (admin)",
+        "description": "Crée un compte LOCAL (isOidc=false) avec mot de passe. Appelant admin requis. Cible de l'automate devpod→Termix.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Utilisateur créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "username/password manquant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Appelant non admin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Nom d'utilisateur déjà existant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/list": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "operationId": "listUsers",
+        "summary": "Lister les utilisateurs (admin)",
+        "description": "Retourne tous les utilisateurs (id, username, flags). Utile pour vérifier l'existence avant création.",
+        "responses": {
+          "200": {
+            "description": "Liste des utilisateurs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Appelant non admin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/make-admin": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "operationId": "makeAdmin",
+        "summary": "Promouvoir un utilisateur admin",
+        "description": "Cible par userId OU username (au moins un requis).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MakeAdminRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Promu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "userId ou username requis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Appelant non admin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Utilisateur introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/api-keys": {
+      "post": {
+        "tags": [
+          "api-keys"
+        ],
+        "operationId": "createApiKey",
+        "summary": "Créer une clé API pour un utilisateur (admin)",
+        "description": "Le token 'tmx_...' n'est retourné qu'UNE fois. Le lier à un compte admin pour authentifier un automate.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApiKeyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Clé créée (token affiché une seule fois)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateApiKeyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "name/userId invalide ou expiresAt invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Appelant non admin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Utilisateur cible introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "api-keys"
+        ],
+        "operationId": "listApiKeys",
+        "summary": "Lister les clés API (admin)",
+        "responses": {
+          "200": {
+            "description": "Liste des clés (sans les tokens)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/api-keys/{keyId}": {
+      "delete": {
+        "tags": [
+          "api-keys"
+        ],
+        "operationId": "deleteApiKey",
+        "summary": "Supprimer une clé API (admin)",
+        "parameters": [
+          {
+            "name": "keyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supprimée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Clé introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Authorization: Bearer <token>. <token> = JWT de session admin OU clé API 'tmx_...' d'un compte admin."
+      }
+    },
+    "schemas": {
+      "AdminCreateUserRequest": {
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Nom d'utilisateur Termix."
+          },
+          "password": {
+            "type": "string",
+            "description": "Mot de passe initial (compte local)."
+          }
+        }
+      },
+      "MakeAdminRequest": {
+        "type": "object",
+        "description": "Au moins un de userId/username.",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateApiKeyRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "userId"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Libellé de la clé."
+          },
+          "userId": {
+            "type": "string",
+            "description": "id du compte propriétaire (un admin pour un usage automate)."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Optionnel ; doit être dans le futur."
+          }
+        }
+      },
+      "CreateApiKeyResponse": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Métadonnées de la clé (id, name, prefix, expiresAt...)."
+          },
+          "token": {
+            "type": "string",
+            "description": "Token brut 'tmx_...' — affiché une seule fois."
+          }
+        },
+        "additionalProperties": true
+      },
+      "ApiKeyListResponse": {
+        "type": "object",
+        "properties": {
+          "apiKeys": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "isAdmin": {
+            "type": "boolean"
+          },
+          "isOidc": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "UserListResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
