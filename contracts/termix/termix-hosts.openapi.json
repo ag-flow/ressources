@@ -1,0 +1,168 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Termix — API hosts / credentials / RBAC (réplique)",
+    "version": "1.0.0",
+    "description": "Périmètre pertinent pour l'épic devpod→Termix : hosts SSH, credentials & clés SSH, dossiers, RBAC & partage. Chemins/méthodes/operationId FIDÈLES (extraits des blocs @swagger de la source Termix). Request bodies volontairement PERMISSIFS (Termix ne documente pas ses corps) — à préciser via le cycle bug/correction. Auth: Authorization: Bearer <token> (JWT admin OU clé API tmx_… d'un admin). Base: https://termix.yoops.org."
+  },
+  "servers": [
+    { "url": "https://termix.yoops.org" }
+  ],
+  "security": [
+    { "bearerAuth": [] }
+  ],
+  "tags": [
+    { "name": "hosts" },
+    { "name": "folders" },
+    { "name": "credentials" },
+    { "name": "keys" },
+    { "name": "rbac" },
+    { "name": "sharing" }
+  ],
+  "paths": {
+    "/host/db/host": {
+      "post": { "tags": ["hosts"], "operationId": "createHost", "summary": "Créer un host SSH", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "get": { "tags": ["hosts"], "operationId": "listHosts", "summary": "Lister les hosts", "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/db/host/{id}": {
+      "get": { "tags": ["hosts"], "operationId": "getHost", "summary": "Détail host", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "put": { "tags": ["hosts"], "operationId": "updateHost", "summary": "Modifier host", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "delete": { "tags": ["hosts"], "operationId": "deleteHost", "summary": "Supprimer host", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/db/host/{id}/password": {
+      "get": { "tags": ["hosts"], "operationId": "revealHostPassword", "summary": "Révéler le mot de passe", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/db/host/{id}/export": {
+      "get": { "tags": ["hosts"], "operationId": "exportHost", "summary": "Exporter un host", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/db/hosts/export": {
+      "get": { "tags": ["hosts"], "operationId": "exportHosts", "summary": "Exporter tous les hosts", "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/enroll": {
+      "post": { "tags": ["hosts"], "operationId": "enrollHost", "summary": "Enrôler un host", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/quick-connect": {
+      "post": { "tags": ["hosts"], "operationId": "quickConnect", "summary": "Connexion rapide", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/bulk-import": {
+      "post": { "tags": ["hosts"], "operationId": "bulkImportHosts", "summary": "Import en masse", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/bulk-update": {
+      "patch": { "tags": ["hosts"], "operationId": "bulkUpdateHosts", "summary": "MàJ en masse", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/ssh-config-import": {
+      "post": { "tags": ["hosts"], "operationId": "importSshConfig", "summary": "Importer ~/.ssh/config", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/autostart/enable": {
+      "post": { "tags": ["hosts"], "operationId": "enableAutostart", "summary": "Activer autostart", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/autostart/disable": {
+      "delete": { "tags": ["hosts"], "operationId": "disableAutostart", "summary": "Désactiver autostart", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/autostart/status": {
+      "get": { "tags": ["hosts"], "operationId": "autostartStatus", "summary": "État autostart", "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/folders": {
+      "get": { "tags": ["folders"], "operationId": "listFolders", "summary": "Lister dossiers", "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/folders/rename": {
+      "put": { "tags": ["folders"], "operationId": "renameFolder", "summary": "Renommer dossier", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/folders/metadata": {
+      "put": { "tags": ["folders"], "operationId": "updateFolderMetadata", "summary": "Métadonnées dossier", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/host/folders/{name}/hosts": {
+      "delete": { "tags": ["folders"], "operationId": "clearFolderHosts", "summary": "Vider dossier", "parameters": [ { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials": {
+      "post": { "tags": ["credentials"], "operationId": "createCredential", "summary": "Créer credential (mdp ou clé)", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "get": { "tags": ["credentials"], "operationId": "listCredentials", "summary": "Lister credentials", "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/{id}": {
+      "get": { "tags": ["credentials"], "operationId": "getCredential", "summary": "Détail credential", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "put": { "tags": ["credentials"], "operationId": "updateCredential", "summary": "Modifier credential", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "delete": { "tags": ["credentials"], "operationId": "deleteCredential", "summary": "Supprimer credential", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/{id}/apply-to-host/{hostId}": {
+      "post": { "tags": ["credentials"], "operationId": "applyCredentialToHost", "summary": "Associer credential↔host", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "hostId", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/{id}/hosts": {
+      "get": { "tags": ["credentials"], "operationId": "listCredentialHosts", "summary": "Hosts du credential", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/{id}/deploy-to-host": {
+      "post": { "tags": ["credentials"], "operationId": "deployCredentialToHost", "summary": "Déployer la clé publique", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/folders": {
+      "get": { "tags": ["credentials"], "operationId": "listCredentialFolders", "summary": "Dossiers credentials", "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/folders/rename": {
+      "put": { "tags": ["credentials"], "operationId": "renameCredentialFolder", "summary": "Renommer dossier credentials", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/generate-key-pair": {
+      "post": { "tags": ["keys"], "operationId": "generateKeyPair", "summary": "Générer paire de clés", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/generate-public-key": {
+      "post": { "tags": ["keys"], "operationId": "generatePublicKey", "summary": "Dériver clé publique", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/validate-key-pair": {
+      "post": { "tags": ["keys"], "operationId": "validateKeyPair", "summary": "Valider paire", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/detect-key-type": {
+      "post": { "tags": ["keys"], "operationId": "detectKeyType", "summary": "Type de clé privée", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/credentials/detect-public-key-type": {
+      "post": { "tags": ["keys"], "operationId": "detectPublicKeyType", "summary": "Type de clé publique", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/host/{id}/share": {
+      "post": { "tags": ["rbac"], "operationId": "shareHost", "summary": "Partager un host (cloisonnement)", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/folder/share": {
+      "post": { "tags": ["rbac"], "operationId": "shareFolder", "summary": "Partager un dossier", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/host/{id}/access": {
+      "get": { "tags": ["rbac"], "operationId": "listHostAccess", "summary": "Accès d'un host", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/host/{id}/access/{accessId}": {
+      "patch": { "tags": ["rbac"], "operationId": "updateHostAccess", "summary": "Modifier accès", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "accessId", "in": "path", "required": true, "schema": { "type": "string" } } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "delete": { "tags": ["rbac"], "operationId": "revokeHostAccess", "summary": "Révoquer accès", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "accessId", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/shared-hosts": {
+      "get": { "tags": ["rbac"], "operationId": "listSharedHosts", "summary": "Hosts partagés", "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/roles": {
+      "get": { "tags": ["rbac"], "operationId": "listRoles", "summary": "Lister rôles", "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "post": { "tags": ["rbac"], "operationId": "createRole", "summary": "Créer rôle", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/roles/{id}": {
+      "put": { "tags": ["rbac"], "operationId": "updateRole", "summary": "Modifier rôle", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "delete": { "tags": ["rbac"], "operationId": "deleteRole", "summary": "Supprimer rôle", "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/permissions/catalog": {
+      "get": { "tags": ["rbac"], "operationId": "permissionsCatalog", "summary": "Catalogue permissions", "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/users/{userId}/roles": {
+      "get": { "tags": ["rbac"], "operationId": "listUserRoles", "summary": "Rôles d'un user", "parameters": [ { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } },
+      "post": { "tags": ["rbac"], "operationId": "assignUserRole", "summary": "Assigner un rôle", "parameters": [ { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } } ], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/rbac/users/{userId}/roles/{roleId}": {
+      "delete": { "tags": ["rbac"], "operationId": "removeUserRole", "summary": "Retirer un rôle", "parameters": [ { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }, { "name": "roleId", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/session-sharing/create": {
+      "post": { "tags": ["sharing"], "operationId": "createSessionShare", "summary": "Créer un partage de session", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }, "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/session-sharing/host/{hostId}/active": {
+      "get": { "tags": ["sharing"], "operationId": "listActiveShares", "summary": "Partages actifs", "parameters": [ { "name": "hostId", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    },
+    "/session-sharing/{shareId}": {
+      "delete": { "tags": ["sharing"], "operationId": "deleteSessionShare", "summary": "Supprimer un partage", "parameters": [ { "name": "shareId", "in": "path", "required": true, "schema": { "type": "string" } } ], "responses": { "200": { "description": "OK" }, "default": { "description": "Erreur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } } }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "schemas": {
+      "Error": { "type": "object", "properties": { "error": { "type": "string" }, "details": { "type": "string" } } }
+    }
+  }
+}
