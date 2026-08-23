@@ -15,6 +15,11 @@ caractère près.
 > leur propre mécanisme d'import et leurs propres schémas — voir **§8**. Les sections §1 à §7
 > ci-dessous concernent uniquement les galeries *workspace-portal*.
 
+> Il héberge **également** les **scripts d'hyperviseur** (dossier `hypervisors/`) : scripts de
+> provisioning de VM consommés par le portail *workspace-portal*, mais **sans import de galerie**
+> — leur URL est saisie à la main dans la config d'un type d'hyperviseur. Schémas et règles
+> propres — voir **§9**.
+
 ---
 
 ## mcp
@@ -695,3 +700,144 @@ Si l'un de ces écarts est comblé côté backend, mets à jour cette section en
 - [ ] Si tu bumps une version existante : chaque changement est bien un **ajout** ou une
       **maj douce de label**, jamais une modification de `type`/`required`/`default`/contrainte/
       `parent`/position ou couleur d'`allowed_value` — sinon nouveau fichier, pas un bump.
+
+---
+
+## 9. Scripts d'hyperviseur (`hypervisors/`)
+
+> Portée : le dossier **`hypervisors/`**. Ces artefacts sont consommés par le portail
+> *workspace-portal*, mais **pas par un import de galerie** : ce sont des URLs de configuration,
+> résolues au runtime. Le mécanisme diffère donc de §1–§7.
+
+### 9.1 Ce que c'est et comment le portail s'en sert
+
+Un artefact = une **action de provisioning** sur un hyperviseur (créer une VM, la détruire),
+composée de deux fichiers de même nom :
+
+```
+hypervisors/
+├── toc.txt                          # index humain de la galerie
+├── proxmox-clone-vm-node.json       # descripteur : formulaire + commandes
+├── proxmox-clone-vm-node.sh         # script exécuté sur le host de l'hyperviseur
+├── proxmox-destroy-vm-node.json
+├── proxmox-destroy-vm-node.sh
+└── harden-networkd.sh               # compagnon, appelé par clone-vm-node.sh (A.10c)
+```
+
+Côté portail, un **type d'hyperviseur** porte deux champs d'URL —
+`HypervisorType.add_script` et `HypervisorType.destroy_script` (`backend/src/portal/config/models.py`).
+Ce sont des **URLs de configuration saisies à la main** (données `/data`), pas un import de
+`toc.txt`. Le portail les fetch au runtime, avec la même garde anti-SSRF que les autres galeries :
+**HTTPS**, hôte public, **pas de redirection**, UTF-8 sans BOM.
+
+Conséquence pratique : **rien n'est importé automatiquement**. Ajouter un fichier ici ne le rend
+pas visible dans le portail — il faut aussi coller son URL raw dans la config de l'hyperviseur.
+
+### 9.2 `hypervisors/toc.txt`
+
+**Pipe-délimité, 4 champs** : `descripteur.json | hyperviseur | action | description`.
+Lignes `#…` ignorées. Il sert d'**inventaire** (et de base à un futur importeur) ; le portail ne
+le lit pas aujourd'hui.
+
+```
+proxmox-clone-vm-node.json | proxmox | create_vm | Clone un template cloud-init et configure un nœud Docker
+```
+
+`action` reprend la valeur du champ `tags` du descripteur (`create_vm`, `destroy_vm`). Ne liste
+que les **descripteurs** — pas les `.sh`, qui sont récupérés par le descripteur, ni les fichiers
+compagnons, qui le sont par le script lui-même.
+
+### 9.3 Le descripteur `.json`
+
+Trois clés à la racine : `args`, `commands`, `tags`.
+
+| Clé | Rôle |
+|---|---|
+| `args` | champs du formulaire affiché par le portail |
+| `commands` | commandes shell exécutées **en séquence** sur le host de l'hyperviseur |
+| `tags` | `["create_vm"]` ou `["destroy_vm"]` — nature de l'action |
+
+Un `arg` : `arg` (nom du placeholder), `label_fr`/`label_en`, `description_fr`/`description_en`,
+`type` (`string` \| `integer` \| `select` \| `sub`), `required`, `default`, et selon le cas :
+
+- `pattern` — regex de validation côté portail (types texte) ;
+- `options` — liste `{value, label}` pour un `select` ;
+- `option_script` — shell exécuté **sur le host** pour peupler dynamiquement un `select`, une
+  ligne par option au format `valeur|libellé` ;
+- `test_script` — `{if, then, else}` : vérification live affichée sous le champ ;
+- `type: "sub"` — **groupe repliable** (`label_fr`, `expanded`) contenant ses propres `args`.
+  C'est là que vivent les paramètres avancés (groupe *Resources* : `MEMORY`, `CORES`,
+  `DISK_EXTRA`, `SWAP_PERCENT`, `CPU_TYPE`).
+
+Dans `commands`, chaque `{ARG}` est **substitué** par la valeur saisie. Le patron en place est
+toujours le même — récupérer le script, le rendre exécutable, l'exécuter :
+
+```json
+"commands": [
+  "curl -fsSL -o /tmp/mon-script.sh https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/mon-script.sh",
+  "chmod +x /tmp/mon-script.sh",
+  "/tmp/mon-script.sh {VMID} --option '{VALEUR}'"
+]
+```
+
+> **Préfère un `select` à un champ libre** dès que le jeu de valeurs est fermé. Une valeur
+> invalide n'échoue pas à la saisie mais **au milieu du script**, laissant une VM à moitié
+> configurée. C'est le choix fait pour `CPU_TYPE` (`x86-64-v3` par défaut, `host` pour la
+> virtualisation imbriquée).
+
+### 9.4 Le script `.sh`
+
+Bash POSIX-ish, `set -euo pipefail`, **exécuté en root sur le host de l'hyperviseur** (pas dans
+la VM) via `curl | bash` — donc :
+
+- **idempotent** : un re-run ne doit pas casser une VM déjà provisionnée ;
+- **stdin n'est pas un terminal** (le script arrive par le pipe) : tout `ssh` interne doit passer
+  `-n`, sinon il consomme le script lui-même ;
+- toute étape optionnelle qui fetch une ressource distante **dégrade proprement** (avertissement
+  sur `stderr`, étape sautée) plutôt que d'interrompre le provisioning.
+
+En-tête conseillé : nom du fichier, une phrase de rôle, `À exécuter en root sur le host PVE`,
+puis un bloc `Usage :` avec des exemples réels. Les étapes sont numérotées en commentaires boîte
+(`# ─── A.10c — Résilience réseau ───`) pour être citables dans un ticket.
+
+### 9.5 URLs internes — le piège du dépôt et de la branche
+
+Un script ou un descripteur qui référence un **autre fichier de cette galerie** doit pointer sur
+**ce dépôt, branche `main`** :
+
+```
+https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/<fichier>
+```
+
+Attention : les scripts venaient de `gaelgael5/devpod-ui`, livré depuis la branche **`dev`**.
+Une URL oubliée continue de fonctionner tant que l'ancien dépôt existe, puis casse
+silencieusement le jour où il est nettoyé. Après toute modification :
+
+```sh
+grep -rn "githubusercontent" hypervisors/     # doit ne montrer que ag-flow/ressources … /main
+```
+
+### 9.6 Séquence de bascule (à respecter, sinon création de VM cassée)
+
+`add_script` est une **config runtime**, pas une valeur du dépôt. L'ordre sûr :
+
+1. publier le fichier dans `ressources` (`main`) et vérifier qu'il répond **200 en direct** ;
+2. basculer l'URL dans la config de l'hyperviseur côté portail ;
+3. **vérifier une création de VM réelle** ;
+4. seulement ensuite, retirer l'ancien fichier de son dépôt d'origine.
+
+Inverser 1 et 4 provoque un fetch 404 et rend toute création impossible.
+
+### 9.7 Checklist avant de livrer un script d'hyperviseur
+
+- [ ] Descripteur `.json` **valide** (`python3 -m json.tool`) et script `.sh` sans erreur de
+      syntaxe (`bash -n`).
+- [ ] Chaque `{ARG}` de `commands` correspond à un `arg` déclaré (y compris dans les groupes `sub`).
+- [ ] Les valeurs fermées sont des `select`, pas des champs libres.
+- [ ] Aucune URL ne pointe encore sur `devpod-ui` / une branche `dev`.
+- [ ] Tous les fichiers compagnons référencés au runtime sont présents dans le même commit.
+- [ ] Script idempotent ; `ssh -n` partout où le script est piped ; étapes optionnelles qui
+      dégradent proprement.
+- [ ] Entrée ajoutée à `hypervisors/toc.txt` au bon format (descripteurs uniquement).
+- [ ] UTF-8 **sans BOM**, `.sh` exécutable (`chmod +x`).
+- [ ] Aucun secret en dur (jetons portail passés en paramètre, jamais écrits dans le dépôt).
