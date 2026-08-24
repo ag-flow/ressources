@@ -1,4 +1,5 @@
 aider/
+android-emulator/
 ansible/
 claude-bypass-permissions/
 claude-code/

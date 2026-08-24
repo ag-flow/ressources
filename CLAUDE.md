@@ -130,9 +130,53 @@ Tu n'écris **pas** de `devcontainer-feature.json` : le portail le génère à l
 | `memory_volume` | objet\|null | `null` | `{name, optional, mapping:{target}}` — volume Docker persistant |
 | `copy` | list | `[]` | (type=initialize) `{source, target}` — `source` relatif (pas de `..`), `target` absolu |
 | `transform` | list | `[]` | (type=initialize) `{op: replace\|remove, target:{file, node}, value?}` ; `node` = dot-path `$.a.b` ; `replace` exige `value`, `remove` l'interdit |
+| `scope` | `workspace` \| `host` | `workspace` | **OÙ** la recette se pose. `host` = sur une machine, via SSH privilégié — voir §2.4 |
+| `host_usages` | list | `[]` | (scope=host, **requis**) familles de machines visées : `workspaces`, `tests`, `portail`, `ressources`, `autres` |
+| `preconditions` | list | `[]` | (scope=host) `{disk_free_gb?, disk_path?, path_exists?, arch?}` — vérifiées avant tout téléchargement |
 
 > Note : la clé legacy **`category`** est acceptée comme alias de `type`. La clé
 > **`memory-volume`** (avec tiret) est acceptée comme alias de `memory_volume`.
+
+### 2.2.1 Recettes de host (`scope: host`)
+
+`type` dit **quand** (build, démarrage, à la demande) ; `scope` dit **où**. Les deux sont
+orthogonaux : une recette de host garde un `type`.
+
+Une recette qui exige `/dev/kvm`, des dizaines de Go, ou un accès matériel n'a pas sa place dans
+un conteneur : elle se pose **une fois sur une machine**. Sans `scope: host` explicite, elle est
+traitée comme une recette de workspace, avec **deux dégâts symétriques** : elle n'apparaît jamais
+dans les recettes applicables à une machine, et elle est proposée à l'installation dans un
+conteneur, où elle échoue.
+
+```yaml
+scope: host
+host_usages:      # au moins une famille — le modèle refuse scope:host sans elle
+  - tests
+  - ressources
+preconditions:    # chacune doit vérifier au moins un critère
+  - path_exists: /dev/kvm
+  - disk_free_gb: 30        # disk_path par défaut : /
+  - arch: x86_64            # tel que `uname -m` le rapporte
+```
+
+Règles de cohérence appliquées par le modèle : `host_usages` et `preconditions` **exigent**
+`scope: host` (les déclarer sans lui échoue) ; `scope: host` **exige** au moins une famille dans
+`host_usages` ; une précondition vide (aucun critère) est refusée — une garantie qui ne vérifie
+rien est pire que pas de garantie.
+
+**Déclare les préconditions même si ton script les vérifie déjà.** Le préflight du script protège
+la machine ; la déclaration permet au portail de les **afficher**, de refuser le lancement et de
+produire un message lisible avant même d'ouvrir la connexion de transfert.
+
+**Options : le portail exporte les valeurs PRÉFIXÉES** `RECIPE_OPT_<NOM_EN_MAJUSCULES>`. Un script
+qui lit `AVD_NAME` au lieu de `RECIPE_OPT_AVD_NAME` **n'reçoit jamais** l'option et retombe en
+silence sur son défaut. Le préfixe est délibéré : des noms génériques exportés tels quels dans un
+shell distant privilégié entreraient en collision avec l'existant. Motif à reprendre, qui garde le
+script lançable seul :
+
+```sh
+API="${RECIPE_OPT_API_LEVEL:-${API_LEVEL:-35}}"
+```
 
 Exemple `recipes/ansible/recipe.meta.yaml` :
 

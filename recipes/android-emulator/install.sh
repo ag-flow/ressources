@@ -19,10 +19,14 @@
 set -euo pipefail
 
 # ─── Options de la recette (valeurs par défaut = recipe.meta.yaml) ───────────
-API="${API_LEVEL:-35}"
-IMAGE_VARIANT="${IMAGE_VARIANT:-default}"
-AVD_NAME="${AVD_NAME:-termix-test}"
-AVD_RAM="${AVD_RAM:-4096}"
+# Le portail exporte les options PRÉFIXÉES (RECIPE_OPT_<NOM>) : `AVD_NAME` ou
+# `IMAGE_VARIANT` sont trop génériques pour être posés tels quels dans
+# l'environnement d'un shell distant privilégié. Le repli sur le nom nu garde
+# le script lançable seul, à la main.
+API="${RECIPE_OPT_API_LEVEL:-${API_LEVEL:-35}}"
+IMAGE_VARIANT="${RECIPE_OPT_IMAGE_VARIANT:-${IMAGE_VARIANT:-default}}"
+AVD_NAME="${RECIPE_OPT_AVD_NAME:-${AVD_NAME:-termix-test}}"
+AVD_RAM="${RECIPE_OPT_AVD_RAM:-${AVD_RAM:-4096}}"
 
 BUILD_TOOLS="35.0.0"
 NDK="27.1.12297006"
