@@ -1,0 +1,22 @@
+id: android-emulator
+key: fe46f7ec-33f7-4252-b29c-cf224b8cd1af
+version: 1.0.0
+type: install
+description: "Chaîne Android complète (SDK, NDK, CMake, émulateur, image système, AVD prêt à démarrer) pour tester une app mobile — recette de HOST : exige /dev/kvm et ~30 Go libres, ne convient pas à un conteneur"
+options:
+  api_level:
+    type: string
+    default: "35"
+    description: "Niveau d'API Android (compileSdk/targetSdk du projet : 35)"
+  image_variant:
+    type: string
+    default: "default"
+    description: "Variante d'image système : 'default' (746 Mo, sans services Google) ou 'google_apis' (1658 Mo)"
+  avd_name:
+    type: string
+    default: "termix-test"
+    description: "Nom de l'AVD créé"
+  avd_ram:
+    type: string
+    default: "4096"
+    description: "RAM allouée à l'AVD, en Mo"
