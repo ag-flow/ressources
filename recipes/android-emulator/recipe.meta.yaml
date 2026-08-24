@@ -13,7 +13,12 @@ host_usages:
 # script : sans déclaration, le portail ne peut ni les afficher ni refuser le
 # lancement.
 preconditions:
-  - path_exists: /dev/kvm
+  # `path_writable` et non `path_exists` : sur host-test-106-1, /dev/kvm existait
+  # mais appartenait au groupe kvm dont l'utilisateur SSH ne faisait pas partie —
+  # la précondition passait et l'échec tombait APRÈS le transfert des 20 Go.
+  # Inutile de déclarer les deux : writable implique exists, et deux lignes de
+  # refus pour une seule cause égarent l'administrateur.
+  - path_writable: /dev/kvm
   - disk_free_gb: 30
   - arch: x86_64
 description: "Chaîne Android complète (SDK, NDK, CMake, émulateur, image système, AVD prêt à démarrer) pour tester une app mobile — recette de HOST : exige /dev/kvm et ~30 Go libres, ne convient pas à un conteneur"

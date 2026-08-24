@@ -132,7 +132,7 @@ Tu n'écris **pas** de `devcontainer-feature.json` : le portail le génère à l
 | `transform` | list | `[]` | (type=initialize) `{op: replace\|remove, target:{file, node}, value?}` ; `node` = dot-path `$.a.b` ; `replace` exige `value`, `remove` l'interdit |
 | `scope` | `workspace` \| `host` | `workspace` | **OÙ** la recette se pose. `host` = sur une machine, via SSH privilégié — voir §2.4 |
 | `host_usages` | list | `[]` | (scope=host, **requis**) familles de machines visées : `workspaces`, `tests`, `portail`, `ressources`, `autres` |
-| `preconditions` | list | `[]` | (scope=host) `{disk_free_gb?, disk_path?, path_exists?, arch?}` — vérifiées avant tout téléchargement |
+| `preconditions` | list | `[]` | (scope=host) `{disk_free_gb?, disk_path?, path_exists?, path_writable?, arch?}` — vérifiées avant tout téléchargement |
 
 > Note : la clé legacy **`category`** est acceptée comme alias de `type`. La clé
 > **`memory-volume`** (avec tiret) est acceptée comme alias de `memory_volume`.
@@ -154,10 +154,23 @@ host_usages:      # au moins une famille — le modèle refuse scope:host sans e
   - tests
   - ressources
 preconditions:    # chacune doit vérifier au moins un critère
-  - path_exists: /dev/kvm
+  - path_writable: /dev/kvm
   - disk_free_gb: 30        # disk_path par défaut : /
   - arch: x86_64            # tel que `uname -m` le rapporte
 ```
+
+**`path_exists` ou `path_writable` ?** Préfère `path_writable` dès que la recette doit *utiliser*
+le chemin et pas seulement constater qu'il est là — un périphérique peut exister et rester
+inaccessible faute d'appartenance au bon groupe. Les deux rendent un message distinct, et ces
+messages appellent des gestes différents :
+
+| déclaration | message | geste attendu |
+|---|---|---|
+| `path_exists` | `chemin absent : /dev/kvm` | activer la capacité sur l'hôte (ex. nesting Proxmox) |
+| `path_writable` | `chemin non accessible en lecture/ecriture : /dev/kvm` | ajouter l'utilisateur au groupe (`usermod -aG`) |
+
+Ne déclare **pas les deux pour un même chemin** : `path_writable` implique `path_exists`, et deux
+lignes de refus pour une seule cause égarent l'administrateur.
 
 Règles de cohérence appliquées par le modèle : `host_usages` et `preconditions` **exigent**
 `scope: host` (les déclarer sans lui échoue) ; `scope: host` **exige** au moins une famille dans
