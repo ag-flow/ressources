@@ -372,8 +372,49 @@ services:
       - "3000"
 ```
 
-> `extra_files` (fichiers compagnons) est **réservé aux templates builtin** du portail —
-> ne l'utilise pas dans la galerie.
+### 4.3 `extra_files` — fichiers compagnons
+
+Un template qui a besoin d'un fichier à côté du `compose.yml` (config d'agent, conf de serveur)
+le déclare dans `meta.yaml`. **C'est supporté pour les templates de galerie** — le portail
+résout chaque nom dans le **même dossier** que `compose.yml` et fetch le contenu à l'import.
+
+```yaml
+extra_files:
+  - config.alloy
+```
+
+Contraintes : nom de fichier **relatif**, pas de chemin absolu, pas de `..` — un nom hors du
+dossier du template est refusé en 422. Le fichier doit exister dans le même commit, sinon
+l'import échoue en 502.
+
+### 4.4 Bind-mounts — liste blanche stricte
+
+Un `compose.yml` de galerie ne peut monter **que quatre chemins absolus** de la machine :
+
+```
+/var/run/docker.sock   /var/log   /run/log/journal   /etc/machine-id
+```
+
+Tout autre bind-mount absolu (`/proc`, `/sys`, `/`, `/var/lib/docker`…) fait **échouer
+l'import** avec `bind-mount absolu interdit`. Pour le reste : chemin relatif (`./data:/app/data`)
+ou volume nommé.
+
+Conséquence à connaître avant d'écrire un collecteur : un agent qui veut mesurer la **machine**
+n'a pas accès à `/proc`, `/sys` ni `/`. En pratique Docker ne cloisonne pas `/proc/stat`,
+`/proc/meminfo` ni `/proc/loadavg` — CPU, mémoire et charge restent justes — mais le **système de
+fichiers** et le **réseau** mesureraient le conteneur. Coupe ces collecteurs plutôt que de laisser
+remonter des séries plausibles et fausses.
+
+Deux autres règles appliquées à l'import :
+
+- **Pas de port hôte codé en dur** (`- "3000:3000"`). Utilise le format alias
+  (`web>3000:3000`), résolu au déploiement.
+- **Toute variable `${VAR}` du compose doit être déclarée en `parameters`**, sauf les quatre
+  injectées par le portail : `LOKI_URL`, `HOSTNAME`, `MODULE`, `ROLE`. Une variable oubliée
+  fait échouer l'import, pas le déploiement.
+
+Enfin, une image sans tag ou en `:latest` ne bloque pas l'import mais produit un **warning** :
+épingle une version.
 
 ---
 

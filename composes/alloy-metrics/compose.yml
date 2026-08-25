@@ -1,0 +1,26 @@
+services:
+  alloy-metrics:
+    image: grafana/alloy:v1.5.1
+    # Nom distinct de `devpod-alloy-agent` (collecteur de logs) : les deux agents
+    # tournent sur la même machine, un nom identique ferait échouer `compose up`.
+    container_name: devpod-alloy-metrics
+    restart: unless-stopped
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      # Volume nommé distinct de `alloy_data`, utilisé par le collecteur de logs.
+      - --storage.path=/var/lib/alloy/data
+      # Port d'écoute distinct de 12345 lui aussi : les deux conteneurs ont leur
+      # propre pile réseau et aucun ne publie sur l'hôte, mais garder des ports
+      # distincts évite l'ambiguïté si l'un des deux passe un jour en host network.
+      - --server.http.listen-addr=0.0.0.0:12346
+    environment:
+      METRICS_URL: ${METRICS_URL:?METRICS_URL requis}
+      HOSTNAME: ${HOSTNAME:?HOSTNAME requis}
+      MODULE: ${MODULE:-devpod}
+      ROLE: ${ROLE:?ROLE requis}
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+      - alloy_metrics_data:/var/lib/alloy/data
+volumes:
+  alloy_metrics_data:

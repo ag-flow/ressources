@@ -1,0 +1,24 @@
+id: alloy-metrics
+name: Collecteur de métriques (Alloy)
+description: >-
+  Collecte les métriques machine (CPU, mémoire, charge, uptime) via le node
+  exporter intégré d'Alloy et les pousse en remote_write vers le TSDB central.
+  Miroir du collecteur de logs, avec lequel il coexiste sur la même machine.
+  Variables HOSTNAME/MODULE/ROLE injectées par le portail ; METRICS_URL saisie
+  au déploiement tant que le portail n'expose pas metrics_push_url.
+version: "1"
+tags:
+  - observabilité
+  - métriques
+image: grafana/alloy:v1.5.1
+parameters:
+  - key: METRICS_URL
+    label: Endpoint remote_write
+    description: >-
+      URL d'écriture du TSDB, ex. http://tsdb.interne:8428/api/v1/write pour
+      VictoriaMetrics. Obligatoire — un déploiement sans elle échoue au démarrage
+      plutôt que de tourner sans rien pousser.
+    type: string
+    required: true
+extra_files:
+  - config.alloy
