@@ -1,6 +1,6 @@
 id: android-emulator
 key: fe46f7ec-33f7-4252-b29c-cf224b8cd1af
-version: 1.0.0
+version: 2.0.0
 type: install
 # `type` dit QUAND (build), `scope` dit OÙ : cette recette se pose sur une
 # machine, jamais dans un conteneur — l'émulateur exige /dev/kvm et 20 Go.
@@ -21,7 +21,7 @@ preconditions:
   - path_writable: /dev/kvm
   - disk_free_gb: 30
   - arch: x86_64
-description: "Chaîne Android complète (SDK, NDK, CMake, émulateur, image système, AVD prêt à démarrer) pour tester une app mobile — recette de HOST : exige /dev/kvm et ~30 Go libres, ne convient pas à un conteneur"
+description: "Machine de développement Android complète et autonome (dépendances système, JDK 17, Node 20+, SDK/NDK/CMake, AVD, émulateur démarré en headless, dépôt cloné et app buildée) — recette de HOST : exige /dev/kvm et ~30 Go libres, ne convient pas à un conteneur"
 options:
   api_level:
     type: string
@@ -39,3 +39,43 @@ options:
     type: string
     default: "4096"
     description: "RAM allouée à l'AVD, en Mo"
+  gpu_mode:
+    type: string
+    default: "swiftshader_indirect"
+    description: "Rendu de l'émulateur : 'swiftshader_indirect' (défaut, logiciel, aucun GPU requis) ou 'host' pour exploiter un GPU en passthrough — dans ce cas /dev/dri est vérifié en précondition et l'installation est refusée s'il manque"
+  headless:
+    type: string
+    default: "1"
+    description: "1 (défaut) = émulateur sans fenêtre. Indépendant du rendu : une machine avec GPU en passthrough n'a pas forcément d'écran. Mettre 0 exige un DISPLAY valide"
+  node_major:
+    type: string
+    default: "20"
+    description: "Version majeure de Node installée via NodeSource — Expo 54 exige 20 minimum, le paquet Debian 12 (18) ne convient pas"
+  repo_url:
+    type: string
+    default: "https://github.com/gaelgael5/Termix-mobile.git"
+    description: "Dépôt de l'application à cloner et builder"
+  repo_ref:
+    type: string
+    default: "test/unit-test-foundation"
+    description: "Branche ou tag à cloner"
+  workdir:
+    type: string
+    default: ""
+    description: "Répertoire de travail du dépôt (vide = ~/termix-mobile)"
+  skip_android:
+    type: string
+    default: "0"
+    description: "1 pour ne pas installer JDK/SDK/NDK/AVD"
+  skip_node:
+    type: string
+    default: "0"
+    description: "1 pour ne pas installer Node"
+  skip_emulator:
+    type: string
+    default: "0"
+    description: "1 pour ne pas démarrer l'émulateur"
+  skip_build:
+    type: string
+    default: "0"
+    description: "1 pour ne pas cloner le dépôt ni builder l'application"
