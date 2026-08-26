@@ -5,8 +5,11 @@
 Toute contribution externe exige la **signature du CLA avant fusion**. Aucune PR externe n'est
 fusionnée sans elle, quelle qu'en soit la taille.
 
-> ⚠️ **À compléter** : lien vers le CLA et procédure de signature. Tant que cette ligne
-> subsiste, aucune PR externe ne peut être fusionnée — c'est volontaire, pas un oubli bénin.
+Le texte est dans [`CLA.md`](CLA.md).
+
+> ⚠️ **[`CLA.md`](CLA.md) est encore un brouillon** : adapté de l'Apache ICLA v2.2, non relu par
+> un juriste, et son canal de signature n'est pas arrêté. Tant que son encadré d'avertissement
+> subsiste, aucune PR externe n'est fusionnable — c'est volontaire, pas un oubli bénin.
 
 La raison est concrète : ce dépôt est distribué sous **FSL-1.1-ALv2**, une licence
 *source-available* dont le licencieur — **Gaël Beard** — doit pouvoir concéder des exceptions
