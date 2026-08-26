@@ -1,6 +1,6 @@
 id: android-emulator
 key: fe46f7ec-33f7-4252-b29c-cf224b8cd1af
-version: 3.1.0
+version: 3.2.0
 type: install
 # `type` dit QUAND (build), `scope` dit OÙ : cette recette se pose sur une
 # machine, jamais dans un conteneur — l'émulateur exige /dev/kvm et 20 Go.
@@ -37,8 +37,8 @@ options:
     description: "Nom de l'AVD créé"
   avd_ram:
     type: string
-    default: "4096"
-    description: "RAM allouée à l'AVD, en Mo"
+    default: "3072"
+    description: "RAM allouée à l'AVD, en Mo. 3072 par défaut : sur une machine de 8 Go, 4096 ne laissait pas assez de marge et l'émulateur se faisait tuer par l'OOM killer"
   gpu_mode:
     type: string
     default: "swiftshader_indirect"

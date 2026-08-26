@@ -7,9 +7,13 @@
 # 18 à 22 Go — on ne la refait pas à chaque provisionnement de workspace.
 #
 # Couvre de bout en bout : dépendances système, JDK 17, Node >= 20, chaîne
-# Android (SDK, NDK, CMake, émulateur, image système), AVD, démarrage de
-# l'émulateur en headless, puis dépôt + premier build. À la fin, `adb devices`
-# voit un appareil prêt et l'app est installée dessus.
+# Android (SDK, NDK, CMake, émulateur, image système), AVD, dépôt et build de
+# l'APK, démarrage de l'émulateur en headless, puis installation. À la fin,
+# `adb devices` voit un appareil prêt et l'app est installée dessus.
+#
+# L'ordre build PUIS émulateur est délibéré : voir le commentaire de l'étape
+# « Dépôt et build de l'APK ». Les inverser fait cohabiter Gradle et l'AVD, et
+# l'OOM killer tue l'émulateur au milieu du build.
 #
 # HEADLESS PAR DÉFAUT. Les VM de test n'ont ni écran ni GPU (`DISPLAY` vide,
 # pas de /dev/dri, zéro entrée libGL) : `-gpu host` n'y démarre pas. On rend
@@ -35,7 +39,7 @@ set -eu
 API="${RECIPE_OPT_API_LEVEL:-${API_LEVEL:-35}}"
 IMAGE_VARIANT="${RECIPE_OPT_IMAGE_VARIANT:-${IMAGE_VARIANT:-default}}"
 AVD_NAME="${RECIPE_OPT_AVD_NAME:-${AVD_NAME:-termix-test}}"
-AVD_RAM="${RECIPE_OPT_AVD_RAM:-${AVD_RAM:-4096}}"
+AVD_RAM="${RECIPE_OPT_AVD_RAM:-${AVD_RAM:-3072}}"
 GPU_MODE="${RECIPE_OPT_GPU_MODE:-${GPU_MODE:-swiftshader_indirect}}"
 HEADLESS="${RECIPE_OPT_HEADLESS:-${HEADLESS:-1}}"
 NODE_MAJOR="${RECIPE_OPT_NODE_MAJOR:-${NODE_MAJOR:-20}}"
@@ -377,6 +381,70 @@ else
     echo "  déjà configuré"
 fi
 
+# ─── Dépôt et build de l'APK ─────────────────────────────────────────────────
+#
+# LE BUILD PASSE AVANT LE DÉMARRAGE DE L'ÉMULATEUR, et c'est délibéré.
+#
+# Dans l'ordre inverse — celui de la première version — l'émulateur et le démon
+# Gradle vivent en même temps : 4 Go pour l'AVD plus 2 à 4 Go pour Gradle sur une
+# machine de 8 Go, et l'OOM killer tranche. Constaté sur host-106-1 le 26/08 : le
+# dépôt s'était cloné, npm avait installé, Gradle avait compilé, puis
+# `expo run:android` a échoué sur
+# `CommandError: Failed to get properties for device (emulator-5554)` —
+# l'émulateur était mort pendant le build.
+#
+# En séparant, les deux pics mémoire ne se superposent plus : on construit l'APK
+# à froid, puis on démarre l'émulateur, puis on installe. `expo run:android`
+# faisait les trois d'un bloc, ce qui interdisait de les ordonner.
+APK=""
+if [ "$SKIP_BUILD" = "1" ]; then
+    step "Dépôt et build — ignorés (--skip-build)"
+else
+    # Répertoire déduit du nom du dépôt quand il n'est pas imposé : une recette
+    # sans dépôt codé en dur ne peut pas non plus avoir de chemin codé en dur.
+    if [ -z "$WORKDIR" ]; then
+        WORKDIR="$HOME/$(basename "$REPO_URL" .git)"
+    fi
+    step "Dépôt ${REPO_URL}${REPO_REF:+ (${REPO_REF})}"
+    if [ -d "$WORKDIR/.git" ]; then
+        echo "  déjà cloné dans $WORKDIR"
+    elif [ -n "$REPO_REF" ]; then
+        git clone --branch "$REPO_REF" "$REPO_URL" "$WORKDIR"
+        echo "  cloné dans $WORKDIR"
+    else
+        # Pas de référence donnée : branche par défaut du dépôt.
+        git clone "$REPO_URL" "$WORKDIR"
+        echo "  cloné dans $WORKDIR (branche par défaut)"
+    fi
+    cd "$WORKDIR"
+
+    step "Dépendances npm"
+    npm ci
+
+    step "Projet Android (expo prebuild)"
+    # `prebuild` génère le projet Gradle ; il faut qu'il existe pour pouvoir
+    # restreindre les ABI juste après.
+    if [ ! -d android ]; then
+        npx expo prebuild --platform android --no-install
+    else
+        echo "  déjà généré"
+    fi
+    # Une seule ABI au lieu de quatre : le build et la sortie sont divisés par
+    # environ quatre, et l'émulateur x86_64 est la seule cible ici.
+    if [ -f android/gradle.properties ]; then
+        sed -i 's/^reactNativeArchitectures=.*/reactNativeArchitectures=x86_64/' android/gradle.properties
+        echo "  ABI restreinte à x86_64"
+    fi
+
+    step "Build de l'APK (10 à 20 min au premier passage)"
+    # Gradle seul, aucun émulateur en vie à cet instant.
+    ( cd android && ./gradlew --no-daemon assembleDebug )
+    APK="$(find android -path '*/outputs/apk/debug/*.apk' -type f 2>/dev/null | head -1)"
+    [ -n "$APK" ] || fail "build terminé mais aucun APK trouvé sous android/**/outputs/apk/debug/"
+    APK="$WORKDIR/$APK"
+    echo "  APK : $APK"
+fi
+
 # ─── Démarrage de l'émulateur ────────────────────────────────────────────────
 # `-no-window` : aucune fenêtre à afficher — indépendant du mode de rendu, une
 #                machine avec GPU en passthrough n'a pas forcément d'écran.
@@ -413,44 +481,39 @@ else
     fi
 fi
 
-# ─── Dépôt et premier build ──────────────────────────────────────────────────
-if [ "$SKIP_BUILD" = "1" ]; then
-    step "Dépôt et build — ignorés (--skip-build)"
-else
-    # Répertoire déduit du nom du dépôt quand il n'est pas imposé : une recette
-    # sans dépôt codé en dur ne peut pas non plus avoir de chemin codé en dur.
-    if [ -z "$WORKDIR" ]; then
-        WORKDIR="$HOME/$(basename "$REPO_URL" .git)"
-    fi
-    step "Dépôt ${REPO_URL}${REPO_REF:+ (${REPO_REF})}"
-    if [ -d "$WORKDIR/.git" ]; then
-        echo "  déjà cloné dans $WORKDIR"
-    elif [ -n "$REPO_REF" ]; then
-        git clone --branch "$REPO_REF" "$REPO_URL" "$WORKDIR"
-        echo "  cloné dans $WORKDIR"
-    else
-        # Pas de référence donnée : branche par défaut du dépôt.
-        git clone "$REPO_URL" "$WORKDIR"
-        echo "  cloné dans $WORKDIR (branche par défaut)"
-    fi
-    cd "$WORKDIR"
+# ─── Installation de l'APK sur l'émulateur ───────────────────────────────────
+if [ -n "$APK" ] && [ "$SKIP_EMULATOR" != "1" ]; then
+    step "Installation sur l'émulateur"
 
-    step "Dépendances npm"
-    npm ci
+    # Contrôle explicite AVANT d'installer : si l'émulateur a disparu entre-temps,
+    # on veut le dire clairement plutôt que de laisser adb rendre une erreur
+    # obscure sur un device fantôme.
+    ALIVE="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+    if [ "$ALIVE" != "1" ]; then
+        fail "l'émulateur ne répond plus au moment d'installer. Cause la plus
+  fréquente : mémoire insuffisante — l'AVD est à ${AVD_RAM} Mo sur une machine
+  qui en a $(free -m | awk '/^Mem:/ {print $2}'). Baisser l'option 'avd_ram',
+  puis rejouer. Journal de l'émulateur : $EMULATOR_LOG"
+    fi
 
-    step "Build Android et installation sur l'émulateur"
-    # `prebuild` génère le projet Gradle ; il faut qu'il existe pour pouvoir
-    # restreindre les ABI juste après.
-    if [ ! -d android ]; then
-        npx expo prebuild --platform android --no-install
+    adb install -r "$APK"
+    echo "  installé : $(basename "$APK")"
+
+    # Lancement de l'app, si le nom de paquet est lisible dans l'APK. aapt2 est
+    # fourni par build-tools, déjà installé. Étape de confort : son échec ne
+    # remet pas en cause l'installation.
+    AAPT2="$(find "$SDK_ROOT/build-tools" -name aapt2 -type f 2>/dev/null | head -1)"
+    if [ -n "$AAPT2" ]; then
+        PKG="$("$AAPT2" dump packagename "$APK" 2>/dev/null | tr -d '\r' || true)"
+        if [ -n "$PKG" ]; then
+            adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1 \
+                && echo "  lancée : $PKG" \
+                || echo "  AVERTISSEMENT : $PKG installée mais non lancée." >&2
+        fi
     fi
-    # Une seule ABI au lieu de quatre : le build et la sortie sont divisés par
-    # environ quatre, et l'émulateur x86_64 est la seule cible ici.
-    if [ -f android/gradle.properties ]; then
-        sed -i 's/^reactNativeArchitectures=.*/reactNativeArchitectures=x86_64/' android/gradle.properties
-        echo "  ABI restreinte à x86_64"
-    fi
-    npx expo run:android
+elif [ -n "$APK" ]; then
+    step "Installation — ignorée (aucun émulateur démarré)"
+    echo "  APK disponible : $APK"
 fi
 
 # ─── ws-scrcpy — écran de l'émulateur dans un navigateur ─────────────────────
