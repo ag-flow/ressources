@@ -39,17 +39,13 @@ AVD_RAM="${RECIPE_OPT_AVD_RAM:-${AVD_RAM:-4096}}"
 GPU_MODE="${RECIPE_OPT_GPU_MODE:-${GPU_MODE:-swiftshader_indirect}}"
 HEADLESS="${RECIPE_OPT_HEADLESS:-${HEADLESS:-1}}"
 NODE_MAJOR="${RECIPE_OPT_NODE_MAJOR:-${NODE_MAJOR:-20}}"
-# Le dépôt à builder est une propriété du WORKSPACE, pas de la recette : coder
-# une application précise dans une recette d'outillage machine serait faux, et
-# la recette deviendrait inutilisable pour tout autre projet. Ordre de
-# résolution, du plus explicite au plus implicite :
-#   1. l'option de la recette, saisie au moment de l'application
-#   2. WORKSPACE_GIT_URL / WORKSPACE_GIT_REF, si le portail les injecte un jour
-#      comme il injecte déjà LOKI_URL et consorts côté compose
-#   3. rien — et l'étape de build est alors refusée EN PRÉCONDITION, pas après
-#      20 Go de téléchargement
-REPO_URL="${RECIPE_OPT_REPO_URL:-${REPO_URL:-${WORKSPACE_GIT_URL:-}}}"
-REPO_REF="${RECIPE_OPT_REPO_REF:-${REPO_REF:-${WORKSPACE_GIT_REF:-}}}"
+# Le dépôt à builder est une propriété du WORKSPACE, pas de la recette. Il est
+# déclaré `from: workspace.git_url` dans recipe.meta.yaml : le PORTAIL arbitre
+# saisie > contexte > défaut, une fois, avant d'assembler la commande distante.
+# Le script n'a donc aucune cascade à écrire — il lit son option, point.
+# Le repli sur le nom nu ne sert qu'au lancement manuel du script.
+REPO_URL="${RECIPE_OPT_REPO_URL:-${REPO_URL:-}}"
+REPO_REF="${RECIPE_OPT_REPO_REF:-${REPO_REF:-main}}"
 WORKDIR="${RECIPE_OPT_WORKDIR:-${WORKDIR:-}}"
 SKIP_ANDROID="${RECIPE_OPT_SKIP_ANDROID:-${SKIP_ANDROID:-0}}"
 SKIP_NODE="${RECIPE_OPT_SKIP_NODE:-${SKIP_NODE:-0}}"
@@ -202,10 +198,13 @@ esac
 # moindre octet téléchargé. Découvrir l'absence d'URL après l'installation du
 # SDK laisserait une machine à moitié faite pour une valeur qui tenait en une
 # ligne de formulaire.
+# Couvre la machine SANS workspace rattaché : ni saisie ni héritage ne
+# fournissent d'URL, et le portail ne considère pas ce cas comme une erreur.
+# C'est donc à la recette de refuser — ici, avant tout téléchargement.
 if [ "$SKIP_BUILD" != "1" ] && [ -z "$REPO_URL" ]; then
-    fail "aucun dépôt à builder : renseigner l'option 'repo_url' (le dépôt de
-  l'application, propriété du workspace — il n'y a volontairement pas de valeur
-  par défaut), ou mettre 'skip_build' à 1 pour n'installer que l'outillage."
+    fail "aucun dépôt à builder : cette machine n'est rattachée à aucun workspace
+  dont hériter le dépôt. Renseigner l'option 'repo_url', ou mettre 'skip_build'
+  à 1 pour n'installer que l'outillage."
 fi
 if [ "$SKIP_BUILD" != "1" ]; then
     echo "  dépôt : ${REPO_URL}${REPO_REF:+ (${REPO_REF})}"

@@ -1,6 +1,6 @@
 id: android-emulator
 key: fe46f7ec-33f7-4252-b29c-cf224b8cd1af
-version: 3.0.0
+version: 3.1.0
 type: install
 # `type` dit QUAND (build), `scope` dit OÙ : cette recette se pose sur une
 # machine, jamais dans un conteneur — l'émulateur exige /dev/kvm et 20 Go.
@@ -53,12 +53,18 @@ options:
     description: "Version majeure de Node installée via NodeSource — Expo 54 exige 20 minimum, le paquet Debian 12 (18) ne convient pas"
   repo_url:
     type: string
-    default: ""
-    description: "OBLIGATOIRE si skip_build vaut 0 : dépôt de l'application à cloner et builder. Volontairement SANS valeur par défaut — le dépôt est une propriété du workspace, pas de la recette d'outillage. Vérifié en précondition : l'application est refusée avant tout téléchargement s'il manque. Repli sur WORKSPACE_GIT_URL si le portail l'injecte"
+    from: workspace.git_url
+    description: >-
+      Dépôt à cloner et builder. Hérité du workspace de la machine si laissé
+      vide. Renseigner pour builder un autre dépôt. Sur une machine sans
+      workspace rattaché, ni saisie ni héritage : l'application est alors
+      refusée en précondition, avant tout téléchargement.
   repo_ref:
     type: string
-    default: ""
-    description: "Branche ou tag à cloner (vide = branche par défaut du dépôt). Repli sur WORKSPACE_GIT_REF si le portail l'injecte"
+    from: workspace.git_ref
+    default: main
+    description: >-
+      Branche ou tag à cloner. Hérité du workspace si laissé vide.
   workdir:
     type: string
     default: ""
