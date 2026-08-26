@@ -53,16 +53,16 @@ options:
     description: "Version majeure de Node installée via NodeSource — Expo 54 exige 20 minimum, le paquet Debian 12 (18) ne convient pas"
   repo_url:
     type: string
-    default: "https://github.com/gaelgael5/Termix-mobile.git"
-    description: "Dépôt de l'application à cloner et builder"
+    default: ""
+    description: "OBLIGATOIRE si skip_build vaut 0 : dépôt de l'application à cloner et builder. Volontairement SANS valeur par défaut — le dépôt est une propriété du workspace, pas de la recette d'outillage. Vérifié en précondition : l'application est refusée avant tout téléchargement s'il manque. Repli sur WORKSPACE_GIT_URL si le portail l'injecte"
   repo_ref:
     type: string
-    default: "test/unit-test-foundation"
-    description: "Branche ou tag à cloner"
+    default: ""
+    description: "Branche ou tag à cloner (vide = branche par défaut du dépôt). Repli sur WORKSPACE_GIT_REF si le portail l'injecte"
   workdir:
     type: string
     default: ""
-    description: "Répertoire de travail du dépôt (vide = ~/termix-mobile)"
+    description: "Répertoire de travail du dépôt (vide = ~/<nom-du-dépôt>)"
   skip_android:
     type: string
     default: "0"

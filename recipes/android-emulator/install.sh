@@ -39,9 +39,18 @@ AVD_RAM="${RECIPE_OPT_AVD_RAM:-${AVD_RAM:-4096}}"
 GPU_MODE="${RECIPE_OPT_GPU_MODE:-${GPU_MODE:-swiftshader_indirect}}"
 HEADLESS="${RECIPE_OPT_HEADLESS:-${HEADLESS:-1}}"
 NODE_MAJOR="${RECIPE_OPT_NODE_MAJOR:-${NODE_MAJOR:-20}}"
-REPO_URL="${RECIPE_OPT_REPO_URL:-${REPO_URL:-https://github.com/gaelgael5/Termix-mobile.git}}"
-REPO_REF="${RECIPE_OPT_REPO_REF:-${REPO_REF:-test/unit-test-foundation}}"
-WORKDIR="${RECIPE_OPT_WORKDIR:-${WORKDIR:-$HOME/termix-mobile}}"
+# Le dépôt à builder est une propriété du WORKSPACE, pas de la recette : coder
+# une application précise dans une recette d'outillage machine serait faux, et
+# la recette deviendrait inutilisable pour tout autre projet. Ordre de
+# résolution, du plus explicite au plus implicite :
+#   1. l'option de la recette, saisie au moment de l'application
+#   2. WORKSPACE_GIT_URL / WORKSPACE_GIT_REF, si le portail les injecte un jour
+#      comme il injecte déjà LOKI_URL et consorts côté compose
+#   3. rien — et l'étape de build est alors refusée EN PRÉCONDITION, pas après
+#      20 Go de téléchargement
+REPO_URL="${RECIPE_OPT_REPO_URL:-${REPO_URL:-${WORKSPACE_GIT_URL:-}}}"
+REPO_REF="${RECIPE_OPT_REPO_REF:-${REPO_REF:-${WORKSPACE_GIT_REF:-}}}"
+WORKDIR="${RECIPE_OPT_WORKDIR:-${WORKDIR:-}}"
 SKIP_ANDROID="${RECIPE_OPT_SKIP_ANDROID:-${SKIP_ANDROID:-0}}"
 SKIP_NODE="${RECIPE_OPT_SKIP_NODE:-${SKIP_NODE:-0}}"
 SKIP_EMULATOR="${RECIPE_OPT_SKIP_EMULATOR:-${SKIP_EMULATOR:-0}}"
@@ -188,6 +197,19 @@ case "$GPU_MODE" in
         fail "mode GPU inconnu : ${GPU_MODE} (attendu swiftshader_indirect ou host)"
         ;;
 esac
+
+# Le dépôt est EXIGÉ dès lors qu'on doit builder — et exigé ici, avant le
+# moindre octet téléchargé. Découvrir l'absence d'URL après l'installation du
+# SDK laisserait une machine à moitié faite pour une valeur qui tenait en une
+# ligne de formulaire.
+if [ "$SKIP_BUILD" != "1" ] && [ -z "$REPO_URL" ]; then
+    fail "aucun dépôt à builder : renseigner l'option 'repo_url' (le dépôt de
+  l'application, propriété du workspace — il n'y a volontairement pas de valeur
+  par défaut), ou mettre 'skip_build' à 1 pour n'installer que l'outillage."
+fi
+if [ "$SKIP_BUILD" != "1" ]; then
+    echo "  dépôt : ${REPO_URL}${REPO_REF:+ (${REPO_REF})}"
+fi
 
 if [ "$HEADLESS" = "1" ]; then
     echo "  affichage : aucun (-no-window)"
@@ -396,12 +418,21 @@ fi
 if [ "$SKIP_BUILD" = "1" ]; then
     step "Dépôt et build — ignorés (--skip-build)"
 else
-    step "Dépôt ${REPO_URL} (${REPO_REF})"
+    # Répertoire déduit du nom du dépôt quand il n'est pas imposé : une recette
+    # sans dépôt codé en dur ne peut pas non plus avoir de chemin codé en dur.
+    if [ -z "$WORKDIR" ]; then
+        WORKDIR="$HOME/$(basename "$REPO_URL" .git)"
+    fi
+    step "Dépôt ${REPO_URL}${REPO_REF:+ (${REPO_REF})}"
     if [ -d "$WORKDIR/.git" ]; then
         echo "  déjà cloné dans $WORKDIR"
-    else
+    elif [ -n "$REPO_REF" ]; then
         git clone --branch "$REPO_REF" "$REPO_URL" "$WORKDIR"
         echo "  cloné dans $WORKDIR"
+    else
+        # Pas de référence donnée : branche par défaut du dépôt.
+        git clone "$REPO_URL" "$WORKDIR"
+        echo "  cloné dans $WORKDIR (branche par défaut)"
     fi
     cd "$WORKDIR"
 
