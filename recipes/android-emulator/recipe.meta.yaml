@@ -81,8 +81,8 @@ options:
     description: "1 pour ne pas cloner le dépôt ni builder l'application"
   enable_scrcpy:
     type: string
-    default: "0"
-    description: "1 pour installer ws-scrcpy : l'écran de l'émulateur dans un navigateur, avec clics et glissements. DÉSACTIVÉ PAR DÉFAUT — le service n'a AUCUNE authentification ni chiffrement et écoute sur toutes les interfaces (son schéma de configuration n'expose pas d'adresse d'écoute). À réserver aux machines protégées par un pare-feu"
+    default: "1"
+    description: "1 (défaut) pour installer ws-scrcpy : l'écran de l'émulateur dans un navigateur, avec clics et glissements — seul moyen de voir l'app sur une machine sans écran. ATTENTION : ce service n'a AUCUNE authentification ni chiffrement et écoute sur toutes les interfaces (son schéma de configuration n'expose pas d'adresse d'écoute) ; le contenir demande une règle de pare-feu. Mettre 0 pour ne pas l'installer"
   scrcpy_port:
     type: string
     default: "8000"

@@ -46,10 +46,11 @@ SKIP_ANDROID="${RECIPE_OPT_SKIP_ANDROID:-${SKIP_ANDROID:-0}}"
 SKIP_NODE="${RECIPE_OPT_SKIP_NODE:-${SKIP_NODE:-0}}"
 SKIP_EMULATOR="${RECIPE_OPT_SKIP_EMULATOR:-${SKIP_EMULATOR:-0}}"
 SKIP_BUILD="${RECIPE_OPT_SKIP_BUILD:-${SKIP_BUILD:-0}}"
-# Drapeau POSITIF, contrairement aux skip_* : ws-scrcpy ouvre un service de
-# contrôle à distance SANS authentification (cf. étape dédiée plus bas). On ne
-# le pose que si la machine le demande explicitement.
-ENABLE_SCRCPY="${RECIPE_OPT_ENABLE_SCRCPY:-${ENABLE_SCRCPY:-0}}"
+# Actif par défaut : sur une machine sans écran, c'est le seul moyen de VOIR
+# l'app tourner. Contrepartie assumée — ws-scrcpy ouvre un service de contrôle à
+# distance sans authentification (cf. étape dédiée plus bas) ; le contenir
+# relève du pare-feu, hors périmètre de cette recette. Mettre 0 pour s'en passer.
+ENABLE_SCRCPY="${RECIPE_OPT_ENABLE_SCRCPY:-${ENABLE_SCRCPY:-1}}"
 SCRCPY_PORT="${RECIPE_OPT_SCRCPY_PORT:-${SCRCPY_PORT:-8000}}"
 SCRCPY_DIR="${RECIPE_OPT_SCRCPY_DIR:-${SCRCPY_DIR:-$HOME/ws-scrcpy}}"
 
@@ -61,9 +62,10 @@ Usage: install.sh [OPTIONS]
   --skip-node         ne pas installer Node
   --skip-emulator     ne pas démarrer l'émulateur
   --skip-build        ne pas cloner le dépôt ni builder l'app
-  --scrcpy            installer ws-scrcpy : écran de l'émulateur dans un
-                      navigateur (désactivé par défaut — AUCUNE authentification,
+  --no-scrcpy         ne pas installer ws-scrcpy (installé par défaut : écran de
+                      l'émulateur dans un navigateur — AUCUNE authentification,
                       le service écoute sur toutes les interfaces)
+  --scrcpy            forcer son installation
   --scrcpy-port PORT  port d'écoute de ws-scrcpy (défaut 8000)
   --scrcpy-dir CHEMIN où installer ws-scrcpy (défaut ~/ws-scrcpy)
   --gpu MODE          rendu : swiftshader_indirect (défaut, logiciel) | host
@@ -90,6 +92,7 @@ while [ $# -gt 0 ]; do
         --skip-emulator) SKIP_EMULATOR=1; shift ;;
         --skip-build)    SKIP_BUILD=1; shift ;;
         --scrcpy)        ENABLE_SCRCPY=1; shift ;;
+        --no-scrcpy)     ENABLE_SCRCPY=0; shift ;;
         --scrcpy-port)   SCRCPY_PORT="$2"; shift 2 ;;
         --scrcpy-dir)    SCRCPY_DIR="$2"; shift 2 ;;
         --gpu)           GPU_MODE="$2"; shift 2 ;;
@@ -529,7 +532,7 @@ Machine de développement Android prête.
   SDK            : ${SDK_ROOT}
   Rendu          : ${GPU_MODE}$([ "$HEADLESS" = "1" ] && echo " (sans fenêtre)" || echo " (avec fenêtre)")
   Journal        : ${EMULATOR_LOG}
-  Interface web  : $([ "$ENABLE_SCRCPY" = "1" ] && echo "http://<cette-machine>:${SCRCPY_PORT} (ws-scrcpy, SANS authentification)" || echo "non installée (--scrcpy pour l'ajouter)")
+  Interface web  : $([ "$ENABLE_SCRCPY" = "1" ] && echo "http://<cette-machine>:${SCRCPY_PORT} (ws-scrcpy, SANS authentification)" || echo "non installée (--no-scrcpy demandé)")
 
   Vérifier les gestes de défilement :
       ${VERIFY_DEST}
