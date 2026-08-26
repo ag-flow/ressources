@@ -869,15 +869,21 @@ Si l'un de ces écarts est comblé côté backend, mets à jour cette section en
 Un artefact = une **action de provisioning** sur un hyperviseur (créer une VM, la détruire),
 composée de deux fichiers de même nom :
 
+**Un sous-dossier par hyperviseur**, et le `toc.txt` à la racine de la galerie :
+
 ```
 hypervisors/
-├── toc.txt                          # index humain de la galerie
-├── proxmox-clone-vm-node.json       # descripteur : formulaire + commandes
-├── proxmox-clone-vm-node.sh         # script exécuté sur le host de l'hyperviseur
-├── proxmox-destroy-vm-node.json
-├── proxmox-destroy-vm-node.sh
-└── harden-networkd.sh               # compagnon, appelé par clone-vm-node.sh (A.10c)
+├── toc.txt                              # index humain de la galerie
+└── proxmox/                             # un dossier par hyperviseur
+    ├── proxmox-clone-vm-node.json       # descripteur : formulaire + commandes
+    ├── proxmox-clone-vm-node.sh         # script exécuté sur le host de l'hyperviseur
+    ├── proxmox-destroy-vm-node.json
+    ├── proxmox-destroy-vm-node.sh
+    └── harden-networkd.sh               # compagnon, appelé par clone-vm-node.sh (A.10c)
 ```
+
+Un nouvel hyperviseur (libvirt, vSphere…) prend son propre dossier : les scripts d'une famille
+ne se mélangent pas à ceux d'une autre, et un `.sh` compagnon reste rattaché à la sienne.
 
 Côté portail, un **type d'hyperviseur** porte deux champs d'URL —
 `HypervisorType.add_script` et `HypervisorType.destroy_script` (`backend/src/portal/config/models.py`).
@@ -890,12 +896,13 @@ pas visible dans le portail — il faut aussi coller son URL raw dans la config 
 
 ### 9.2 `hypervisors/toc.txt`
 
-**Pipe-délimité, 4 champs** : `descripteur.json | hyperviseur | action | description`.
-Lignes `#…` ignorées. Il sert d'**inventaire** (et de base à un futur importeur) ; le portail ne
-le lit pas aujourd'hui.
+**Pipe-délimité, 4 champs** : `chemin/descripteur.json | hyperviseur | action | description`.
+Le chemin est **relatif au `toc.txt`**, donc préfixé du dossier de l'hyperviseur. Lignes `#…`
+ignorées. Il sert d'**inventaire** (et de base à un futur importeur) ; le portail ne le lit pas
+aujourd'hui.
 
 ```
-proxmox-clone-vm-node.json | proxmox | create_vm | Clone un template cloud-init et configure un nœud Docker
+proxmox/proxmox-clone-vm-node.json | proxmox | create_vm | Clone un template cloud-init et configure un nœud Docker
 ```
 
 `action` reprend la valeur du champ `tags` du descripteur (`create_vm`, `destroy_vm`). Ne liste
@@ -929,7 +936,7 @@ toujours le même — récupérer le script, le rendre exécutable, l'exécuter 
 
 ```json
 "commands": [
-  "curl -fsSL -o /tmp/mon-script.sh https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/mon-script.sh",
+  "curl -fsSL -o /tmp/mon-script.sh https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/<hyperviseur>/mon-script.sh",
   "chmod +x /tmp/mon-script.sh",
   "/tmp/mon-script.sh {VMID} --option '{VALEUR}'"
 ]
@@ -961,7 +968,7 @@ Un script ou un descripteur qui référence un **autre fichier de cette galerie*
 **ce dépôt, branche `main`** :
 
 ```
-https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/<fichier>
+https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/<hyperviseur>/<fichier>
 ```
 
 Attention : les scripts venaient de `gaelgael5/devpod-ui`, livré depuis la branche **`dev`**.

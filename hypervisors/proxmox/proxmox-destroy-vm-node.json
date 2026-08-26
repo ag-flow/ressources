@@ -15,7 +15,7 @@
 
   ],
   "commands": [
-    "curl -fsSL -o /tmp/proxmox-destroy-vm-node.sh https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/proxmox-destroy-vm-node.sh",
+    "curl -fsSL -o /tmp/proxmox-destroy-vm-node.sh https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/proxmox/proxmox-destroy-vm-node.sh",
     "chmod +x /tmp/proxmox-destroy-vm-node.sh",
     "/tmp/proxmox-destroy-vm-node.sh {VMID} --force"
   ],

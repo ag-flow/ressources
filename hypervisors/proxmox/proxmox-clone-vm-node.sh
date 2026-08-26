@@ -715,7 +715,7 @@ fi
 # networkd protégé de l'OOM killer, KeepConfiguration=yes (un échec DHCP ne
 # flush plus l'adresse — incident du 24/07), timer de reprise automatique.
 # Script mutualisé avec le durcissement des VM existantes (harden-networkd.sh).
-HARDEN_URL="https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/harden-networkd.sh"
+HARDEN_URL="https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/proxmox/harden-networkd.sh"
 echo ""
 echo "==> A.10c — Résilience réseau (networkd)..."
 HARDEN_TMP=$(mktemp /tmp/harden-networkd-XXXXXX.sh)

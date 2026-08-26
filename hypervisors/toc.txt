@@ -1,8 +1,9 @@
 # Galerie hyperviseurs — descripteurs d'actions de provisioning.
-# Format : descripteur.json | hyperviseur | action | description
+# Un sous-dossier par hyperviseur ; le chemin du descripteur est relatif à ce toc.
+# Format : chemin/descripteur.json | hyperviseur | action | description
 # L'URL de chaque descripteur est saisie à la main dans la config du portail
 # (HypervisorType.add_script / destroy_script) — pas d'import automatique.
-# Fichier compagnon non listé ici : harden-networkd.sh, récupéré au runtime par
-# proxmox-clone-vm-node.sh (étape A.10c) et non par le portail.
-proxmox-clone-vm-node.json | proxmox | create_vm | Clone un template cloud-init et configure un nœud Docker (étapes A.1–A.11)
-proxmox-destroy-vm-node.json | proxmox | destroy_vm | Arrête et supprime une VM Proxmox par son VMID
+# Fichier compagnon non listé ici : proxmox/harden-networkd.sh, récupéré au
+# runtime par proxmox-clone-vm-node.sh (étape A.10c) et non par le portail.
+proxmox/proxmox-clone-vm-node.json | proxmox | create_vm | Clone un template cloud-init et configure un nœud Docker (étapes A.1–A.11)
+proxmox/proxmox-destroy-vm-node.json | proxmox | destroy_vm | Arrête et supprime une VM Proxmox par son VMID
