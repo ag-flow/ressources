@@ -1,0 +1,32 @@
+ag.flow — dépôt « ressources »
+Copyright 2026 ag.flow
+
+SPDX-License-Identifier: FSL-1.1-ALv2
+
+Ce dépôt et l'ensemble des artefacts qu'il contient — recettes devcontainer,
+profils VS Code, templates docker-compose, templates de messages Jinja2,
+scripts d'hyperviseur et templates de structure docflow — sont distribués sous
+Functional Source License, Version 1.1, ALv2 Future License (FSL-1.1-ALv2).
+Le texte intégral figure dans le fichier LICENSE à la racine.
+
+Chaque version publiée bascule automatiquement sous Apache License 2.0 au
+deuxième anniversaire de sa date de publication. La fenêtre est glissante :
+elle court par version, il n'y a pas de date couperet unique.
+
+Cette mention centralisée tient lieu d'en-tête SPDX pour les fichiers du dépôt.
+Elle n'est pas répétée fichier par fichier : 31 des artefacts versionnés sont
+des documents JSON (contrats OpenAPI, descripteurs d'hyperviseur), un format
+qui n'admet aucun commentaire et ne peut donc pas porter d'en-tête.
+
+
+LOGICIELS TIERS
+---------------
+
+Ce dépôt ne redistribue aucun logiciel tiers et n'a aucune dépendance de code
+propre : il ne contient ni paquet, ni bibliothèque vendorisée, ni binaire.
+
+Les artefacts qu'il publie *installent* ou *déploient* des logiciels tiers sur
+des machines cibles — SDK Android, images Docker, paquets npm et système,
+extensions VS Code. Ces logiciels restent régis par leurs licences respectives,
+obtenus par le licencié directement auprès de leurs éditeurs. La présente
+licence ne porte que sur les recettes, manifestes et scripts de ce dépôt.
