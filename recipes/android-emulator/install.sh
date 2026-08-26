@@ -46,6 +46,12 @@ SKIP_ANDROID="${RECIPE_OPT_SKIP_ANDROID:-${SKIP_ANDROID:-0}}"
 SKIP_NODE="${RECIPE_OPT_SKIP_NODE:-${SKIP_NODE:-0}}"
 SKIP_EMULATOR="${RECIPE_OPT_SKIP_EMULATOR:-${SKIP_EMULATOR:-0}}"
 SKIP_BUILD="${RECIPE_OPT_SKIP_BUILD:-${SKIP_BUILD:-0}}"
+# Drapeau POSITIF, contrairement aux skip_* : ws-scrcpy ouvre un service de
+# contrôle à distance SANS authentification (cf. étape dédiée plus bas). On ne
+# le pose que si la machine le demande explicitement.
+ENABLE_SCRCPY="${RECIPE_OPT_ENABLE_SCRCPY:-${ENABLE_SCRCPY:-0}}"
+SCRCPY_PORT="${RECIPE_OPT_SCRCPY_PORT:-${SCRCPY_PORT:-8000}}"
+SCRCPY_DIR="${RECIPE_OPT_SCRCPY_DIR:-${SCRCPY_DIR:-$HOME/ws-scrcpy}}"
 
 usage() {
     cat <<'USAGE'
@@ -55,6 +61,11 @@ Usage: install.sh [OPTIONS]
   --skip-node         ne pas installer Node
   --skip-emulator     ne pas démarrer l'émulateur
   --skip-build        ne pas cloner le dépôt ni builder l'app
+  --scrcpy            installer ws-scrcpy : écran de l'émulateur dans un
+                      navigateur (désactivé par défaut — AUCUNE authentification,
+                      le service écoute sur toutes les interfaces)
+  --scrcpy-port PORT  port d'écoute de ws-scrcpy (défaut 8000)
+  --scrcpy-dir CHEMIN où installer ws-scrcpy (défaut ~/ws-scrcpy)
   --gpu MODE          rendu : swiftshader_indirect (défaut, logiciel) | host
                       (passthrough GPU — exige /dev/dri sur la machine)
   --window            afficher une fenêtre (exige un serveur X ; défaut : sans)
@@ -78,6 +89,9 @@ while [ $# -gt 0 ]; do
         --skip-node)     SKIP_NODE=1; shift ;;
         --skip-emulator) SKIP_EMULATOR=1; shift ;;
         --skip-build)    SKIP_BUILD=1; shift ;;
+        --scrcpy)        ENABLE_SCRCPY=1; shift ;;
+        --scrcpy-port)   SCRCPY_PORT="$2"; shift 2 ;;
+        --scrcpy-dir)    SCRCPY_DIR="$2"; shift 2 ;;
         --gpu)           GPU_MODE="$2"; shift 2 ;;
         --window)        HEADLESS=0; shift ;;
         --avd)           AVD_NAME="$2"; shift 2 ;;
@@ -406,6 +420,93 @@ else
     npx expo run:android
 fi
 
+# ─── ws-scrcpy — écran de l'émulateur dans un navigateur ─────────────────────
+#
+# Utile sur une machine sans écran : l'émulateur tourne en -no-window, ws-scrcpy
+# diffuse son écran en H.264 sur WebSocket et renvoie les clics et glissements
+# comme des événements tactiles réels.
+#
+# AVERTISSEMENT, repris du README du projet : « There is no authorization on any
+# level » et « There is no encryption between browser and node.js server ». Le
+# serveur écoute sur TOUTES les interfaces et son schéma de configuration
+# (Configuration.d.ts) n'expose aucune adresse d'écoute — impossible de le
+# restreindre à la loopback par configuration. Qui atteint ce port pilote
+# l'émulateur, transfère des fichiers et ouvre un shell, sans mot de passe.
+# Contenir l'exposition demande une règle de pare-feu, hors périmètre de cette
+# recette. D'où un drapeau POSITIF, désactivé par défaut.
+if [ "$ENABLE_SCRCPY" = "1" ]; then
+    step "ws-scrcpy (interface web, port ${SCRCPY_PORT})"
+
+    # node-gyp compile des modules natifs : outils de build indispensables.
+    if [ "$PKG" = apt ]; then
+        run_root apt-get install -y -qq build-essential python3
+    else
+        run_root dnf install -y gcc-c++ make python3
+    fi
+
+    if [ -d "$SCRCPY_DIR/.git" ]; then
+        echo "  déjà cloné dans $SCRCPY_DIR"
+    else
+        git clone https://github.com/NetrisTV/ws-scrcpy.git "$SCRCPY_DIR"
+        echo "  cloné dans $SCRCPY_DIR"
+    fi
+
+    cd "$SCRCPY_DIR"
+    if [ -d node_modules ]; then
+        echo "  dépendances déjà installées"
+    else
+        npm install
+    fi
+
+    # Format vérifié sur config.example.yaml : une liste `server`, chaque entrée
+    # portant `secure` et `port`. `runApplTracker` coupe la découverte iOS, sans
+    # objet ici et source d'erreurs au démarrage.
+    {
+        echo "runGoogTracker: true"
+        echo "runApplTracker: false"
+        echo "server:"
+        echo "  - secure: false"
+        echo "    port: ${SCRCPY_PORT}"
+    } > "$SCRCPY_DIR/config.yaml"
+
+    if command -v systemctl >/dev/null 2>&1 && [ -d /etc/systemd/system ]; then
+        # Un service : sans lui, ws-scrcpy meurt avec le shell qui a lancé la
+        # recette — le portail ferme sa session SSH dès la fin du script.
+        {
+            echo "[Unit]"
+            echo "Description=ws-scrcpy — ecran de l'emulateur Android dans un navigateur"
+            echo "After=network.target"
+            echo ""
+            echo "[Service]"
+            echo "Type=simple"
+            echo "User=$(id -un)"
+            echo "WorkingDirectory=${SCRCPY_DIR}"
+            echo "Environment=WS_SCRCPY_CONFIG=${SCRCPY_DIR}/config.yaml"
+            echo "Environment=ANDROID_SDK_ROOT=${SDK_ROOT}"
+            echo "Environment=ANDROID_HOME=${SDK_ROOT}"
+            echo "Environment=PATH=${SDK_ROOT}/platform-tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            echo "ExecStart=$(command -v npm) start"
+            echo "Restart=on-failure"
+            echo "RestartSec=5"
+            echo ""
+            echo "[Install]"
+            echo "WantedBy=multi-user.target"
+        } | run_root tee /etc/systemd/system/ws-scrcpy.service >/dev/null
+        run_root systemctl daemon-reload
+        run_root systemctl enable ws-scrcpy.service >/dev/null 2>&1 || true
+        run_root systemctl restart ws-scrcpy.service
+        echo "  service ws-scrcpy actif"
+    else
+        echo "  AVERTISSEMENT : systemd absent — lancement en arrière-plan, non persistant." >&2
+        WS_SCRCPY_CONFIG="$SCRCPY_DIR/config.yaml" nohup npm start \
+            > "$HOME/.ws-scrcpy.log" 2>&1 &
+    fi
+
+    echo "  interface : http://<adresse-de-cette-machine>:${SCRCPY_PORT}"
+    echo "  côté émulateur, choisir « proxy over adb » dans la liste des interfaces"
+    echo "  — le serveur embarqué n'écoute que sur l'interface interne de l'émulateur."
+fi
+
 # ─── Script de vérification des gestes ───────────────────────────────────────
 # Le portail ne transfère QUE install.sh (host_apply.py encode un seul fichier)
 # : on récupère le script de test depuis la galerie plutôt que de l'embarquer,
@@ -428,6 +529,7 @@ Machine de développement Android prête.
   SDK            : ${SDK_ROOT}
   Rendu          : ${GPU_MODE}$([ "$HEADLESS" = "1" ] && echo " (sans fenêtre)" || echo " (avec fenêtre)")
   Journal        : ${EMULATOR_LOG}
+  Interface web  : $([ "$ENABLE_SCRCPY" = "1" ] && echo "http://<cette-machine>:${SCRCPY_PORT} (ws-scrcpy, SANS authentification)" || echo "non installée (--scrcpy pour l'ajouter)")
 
   Vérifier les gestes de défilement :
       ${VERIFY_DEST}
