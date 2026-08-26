@@ -1,6 +1,6 @@
 id: android-emulator
 key: fe46f7ec-33f7-4252-b29c-cf224b8cd1af
-version: 2.0.0
+version: 3.0.0
 type: install
 # `type` dit QUAND (build), `scope` dit OÙ : cette recette se pose sur une
 # machine, jamais dans un conteneur — l'émulateur exige /dev/kvm et 20 Go.

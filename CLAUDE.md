@@ -505,6 +505,11 @@ Pour **chaque** artefact ajouté/modifié :
 - [ ] YAML **valide** et **sans champ hors schéma** (les modèles sont `extra="forbid"`).
 - [ ] Recettes : `key` fixe (UUID) si d'autres recettes en dépendent ; `installs_after`
       pointe des `key` existants.
+- [ ] **Recettes : toute modification incrémente `version`** dans `recipe.meta.yaml`, dans le
+      même commit. Le portail pose une sentinelle `<version> <date>` par recette appliquée et
+      **ne rejoue rien** si la version n'a pas bougé : à version constante, les machines déjà
+      provisionnées ne recevront jamais le changement. Semver — retrait d'un défaut, option
+      devenue obligatoire, étape activée par défaut ou changement de périmètre = **major**.
 - [ ] Profils : `extension_count` du `toc.txt` == `len(extensions)`.
 - [ ] Compose : `message_key` (si présent) correspond à une `key` d'un template `jinja/`.
 - [ ] Jinja : les variables utilisées appartiennent au **contexte** de la clé (host vs deploy).
