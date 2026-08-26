@@ -20,7 +20,8 @@ dans [`CLAUDE.md`](CLAUDE.md).
 ## Licence
 
 **FSL-1.1-ALv2** — Functional Source License v1.1, future licence Apache 2.0.
-Texte intégral : [`LICENSE`](LICENSE). Mention centralisée : [`NOTICE`](NOTICE).
+Copyright 2026 **Gaël Beard**. Texte intégral : [`LICENSE`](LICENSE). Mention
+centralisée : [`NOTICE`](NOTICE).
 
 Licence *source-available* : le code est lisible, modifiable et utilisable librement, à une
 exception près — le **Competing Use**.
@@ -33,7 +34,7 @@ exception près — le **Competing Use**.
 | Modification, création d'œuvres dérivées, redistribution | ✅ |
 | Enseignement et recherche non commerciaux | ✅ |
 | Proposer à des tiers un produit ou service commercial qui **s'y substitue** | ❌ licence commerciale requise |
-| Proposer un produit ou service qui se substitue à une **offre d'ag.flow bâtie dessus** | ❌ licence commerciale requise |
+| Proposer un produit ou service qui se substitue à une **offre du licencieur bâtie dessus** | ❌ licence commerciale requise |
 | Proposer un produit ou service aux fonctionnalités **substantiellement similaires** | ❌ licence commerciale requise |
 
 **Bascule automatique en Apache 2.0** deux ans après la publication de **chaque** version. La

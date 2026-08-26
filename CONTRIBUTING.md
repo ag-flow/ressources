@@ -2,18 +2,17 @@
 
 ## CLA — préalable obligatoire
 
-Toute contribution externe exige la **signature du CLA d'ag.flow avant fusion**. Aucune PR
-externe n'est fusionnée sans elle, quelle qu'en soit la taille.
+Toute contribution externe exige la **signature du CLA avant fusion**. Aucune PR externe n'est
+fusionnée sans elle, quelle qu'en soit la taille.
 
-> ⚠️ **À compléter** : lien vers le CLA d'ag.flow et procédure de signature. Tant que cette
-> ligne subsiste, aucune PR externe ne peut être fusionnée — c'est volontaire, pas un oubli
-> bénin.
+> ⚠️ **À compléter** : lien vers le CLA et procédure de signature. Tant que cette ligne
+> subsiste, aucune PR externe ne peut être fusionnée — c'est volontaire, pas un oubli bénin.
 
 La raison est concrète : ce dépôt est distribué sous **FSL-1.1-ALv2**, une licence
-*source-available* dont ag.flow doit pouvoir concéder des exceptions commerciales. Sans cession
-de droits par le contributeur, une contribution fusionnée rendrait ce double licenciement
-impossible — et le blocage serait définitif, chaque contributeur gardant un droit de veto de
-fait sur toute relicence ultérieure.
+*source-available* dont le licencieur — **Gaël Beard** — doit pouvoir concéder des exceptions
+commerciales. Sans cession de droits par le contributeur, une contribution fusionnée rendrait ce
+double licenciement impossible — et le blocage serait définitif, chaque contributeur gardant un
+droit de veto de fait sur toute relicence ultérieure.
 
 ## Nature des contributions
 
