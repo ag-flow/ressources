@@ -124,7 +124,7 @@ Tu n'écris **pas** de `devcontainer-feature.json` : le portail le génère à l
 | `type` | `install` \| `start` \| `initialize` | `install` | `install` = build ; `start` = à chaque démarrage ; `initialize` = ops copy/transform à la demande |
 | `version` | str | `1.0.0` | semver conseillé |
 | `description` | str | `""` | |
-| `options` | map | `{}` | `nom: {type, default, description}` (voir `RecipeOption`) |
+| `options` | map | `{}` | `nom: {type, default, description, from?}` (voir `RecipeOption`) — `from` = héritage du contexte, §2.2.2 |
 | `requires_secrets` | list | `[]` | `{path, env}` ou string courte (auto → env `PATH.upper()` avec `/`,`-`→`_`). `path` `^[A-Za-z0-9][A-Za-z0-9/_-]{0,127}$`, `env` `^[A-Z][A-Z0-9_]{0,63}$` |
 | `installs_after` | list[UUID] | `[]` | **keys** (UUID) des recettes à installer avant. Auto-incluses même non sélectionnées |
 | `memory_volume` | objet\|null | `null` | `{name, optional, mapping:{target}}` — volume Docker persistant |
@@ -190,6 +190,58 @@ script lançable seul :
 ```sh
 API="${RECIPE_OPT_API_LEVEL:-${API_LEVEL:-35}}"
 ```
+
+### 2.2.2 `from:` — hériter une valeur du contexte
+
+Certaines valeurs n'appartiennent pas à la recette mais au **workspace** auquel la machine est
+rattachée — le dépôt à cloner, typiquement. Les coder en dur rend la recette fausse partout
+ailleurs ; les faire saisir à chaque application redemande une valeur que le portail connaît déjà.
+
+L'option **déclare** donc d'où vient sa valeur :
+
+```yaml
+options:
+  repo_url:
+    type: string
+    from: workspace.git_url
+    description: >-
+      Dépôt à cloner. Hérité du workspace de la machine si laissé vide.
+```
+
+**Vocabulaire fermé** — une clé inconnue fait échouer la validation du manifeste **à l'import**,
+avec l'énumération des clés valides. Elle n'est pas ignorée en silence à l'exécution.
+
+| Clé | Valeur fournie |
+|---|---|
+| `workspace.id` | identifiant canonique `<login>-<nom>` |
+| `workspace.git_url` | dépôt source du workspace |
+| `workspace.git_ref` | branche du workspace |
+
+Étendre ce vocabulaire est un acte délibéré côté portail : chaque valeur qu'il accepte de
+divulguer à un script privilégié se décide. **Demande l'ajout d'une clé plutôt que d'inventer une
+convention.**
+
+**La priorité est arbitrée par le portail**, une fois, avant d'assembler la commande distante :
+
+```
+saisie utilisateur  >  contexte (from:)  >  default
+```
+
+Le script n'a **aucune cascade à écrire** — il lit `RECIPE_OPT_<NOM>` et rien d'autre. Le préfixe
+est formé à partir du **nom de l'option**, jamais de la clé `from:`. Deux règles sur le vide :
+une saisie vide ne masque pas le contexte (les valeurs sont `strip()`ées), et une valeur de
+contexte vide ne masque pas le `default`.
+
+Le contexte n'existe que pour une **machine de test rattachée à un workspace**. Il est absent
+pour un host de workspaces ou un serveur de ressources, et **ce n'est pas une erreur** : les
+options tombent sur leur `default`. Une recette qui exige la valeur doit donc la refuser
+**par une précondition**, avant tout téléchargement.
+
+> N'écris **jamais** de repli sur des variables `WORKSPACE_*` : une première mouture du mécanisme
+> les exportait, elle est abandonnée. Un script qui les lit ne reçoit rien.
+
+Validation de la valeur **finale**, héritage compris : `^[A-Za-z0-9 ._/:@+-]{0,255}$`. Une URL git
+usuelle passe ; une URL portant `?`, `=`, `#` ou `%` est refusée.
 
 Exemple `recipes/ansible/recipe.meta.yaml` :
 
