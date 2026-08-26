@@ -51,7 +51,7 @@ CI_USER="debian"
 # x86-64-v3 expose AVX/AVX2/FMA, est supporté par les deux nœuds du cluster (Haswell + Raptor Lake),
 # et reste live-migratable entre eux — contrairement à --cpu host qui épingle au modèle exact.
 CPU_TYPE="x86-64-v3"
-# Liste fermée, alignée sur celle du descripteur UI (proxmox-clone-vm-node.json).
+# Liste fermée, alignée sur celle du descripteur UI (clone-vm-node.json).
 # Un modèle inconnu ne serait rejeté que par `qm set`, APRÈS le clone : la VM
 # resterait créée mais à moitié configurée. On le refuse donc avant d'y toucher.
 #

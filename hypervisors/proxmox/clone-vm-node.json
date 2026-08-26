@@ -192,9 +192,9 @@
 
   ],
   "commands": [
-    "curl -fsSL -o /tmp/proxmox-clone-vm-node.sh https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/proxmox/proxmox-clone-vm-node.sh",
-    "chmod +x /tmp/proxmox-clone-vm-node.sh",
-    "/tmp/proxmox-clone-vm-node.sh {NEW_VMID} '{NODE_NAME}' --ip '{IP_CIDR}' --gw '{GATEWAY}' --template '{TEMPLATE_VMID}' --storage '{STORAGE}' --dns '{DNS}' --memory {MEMORY} --cores {CORES} --disk '{DISK_EXTRA}' --swap {SWAP_PERCENT} --cpu '{CPU_TYPE}' --ciuser '{CI_USER}' --portal-url '{PORTAL_URL}' --portal-token '{PORTAL_TOKEN}' --portal-pve-node '{PORTAL_PVE_NODE}'"
+    "curl -fsSL -o /tmp/clone-vm-node.sh https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/proxmox/clone-vm-node.sh",
+    "chmod +x /tmp/clone-vm-node.sh",
+    "/tmp/clone-vm-node.sh {NEW_VMID} '{NODE_NAME}' --ip '{IP_CIDR}' --gw '{GATEWAY}' --template '{TEMPLATE_VMID}' --storage '{STORAGE}' --dns '{DNS}' --memory {MEMORY} --cores {CORES} --disk '{DISK_EXTRA}' --swap {SWAP_PERCENT} --cpu '{CPU_TYPE}' --ciuser '{CI_USER}' --portal-url '{PORTAL_URL}' --portal-token '{PORTAL_TOKEN}' --portal-pve-node '{PORTAL_PVE_NODE}'"
   ],
   "tags": ["create_vm"]
 }

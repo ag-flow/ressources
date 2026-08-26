@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# proxmox-destroy-vm-node.sh — Arrête et supprime une VM Proxmox par son VMID.
+# destroy-vm-node.sh — Arrête et supprime une VM Proxmox par son VMID.
 # À exécuter en root sur le host PVE, pas dans une VM.
 #
 # Usage :
-#   bash proxmox-destroy-vm-node.sh <VMID> [OPTIONS]
+#   bash destroy-vm-node.sh <VMID> [OPTIONS]
 #
 # Arguments obligatoires :
 #   <VMID>            VMID de la VM à supprimer (entier positif)

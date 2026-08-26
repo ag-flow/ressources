@@ -873,17 +873,20 @@ composée de deux fichiers de même nom :
 
 ```
 hypervisors/
-├── toc.txt                              # index humain de la galerie
-└── proxmox/                             # un dossier par hyperviseur
-    ├── proxmox-clone-vm-node.json       # descripteur : formulaire + commandes
-    ├── proxmox-clone-vm-node.sh         # script exécuté sur le host de l'hyperviseur
-    ├── proxmox-destroy-vm-node.json
-    ├── proxmox-destroy-vm-node.sh
-    └── harden-networkd.sh               # compagnon, appelé par clone-vm-node.sh (A.10c)
+├── toc.txt                      # index humain de la galerie
+└── proxmox/                     # un dossier par hyperviseur
+    ├── clone-vm-node.json       # descripteur : formulaire + commandes
+    ├── clone-vm-node.sh         # script exécuté sur le host de l'hyperviseur
+    ├── destroy-vm-node.json
+    ├── destroy-vm-node.sh
+    └── harden-networkd.sh       # compagnon, appelé par clone-vm-node.sh (A.10c)
 ```
 
 Un nouvel hyperviseur (libvirt, vSphere…) prend son propre dossier : les scripts d'une famille
 ne se mélangent pas à ceux d'une autre, et un `.sh` compagnon reste rattaché à la sienne.
+
+**Ne répète pas le nom de l'hyperviseur dans les fichiers** : le dossier le porte déjà.
+`proxmox/clone-vm-node.sh`, pas `proxmox/proxmox-clone-vm-node.sh`.
 
 Côté portail, un **type d'hyperviseur** porte deux champs d'URL —
 `HypervisorType.add_script` et `HypervisorType.destroy_script` (`backend/src/portal/config/models.py`).
@@ -902,7 +905,7 @@ ignorées. Il sert d'**inventaire** (et de base à un futur importeur) ; le port
 aujourd'hui.
 
 ```
-proxmox/proxmox-clone-vm-node.json | proxmox | create_vm | Clone un template cloud-init et configure un nœud Docker
+proxmox/clone-vm-node.json | proxmox | create_vm | Clone un template cloud-init et configure un nœud Docker
 ```
 
 `action` reprend la valeur du champ `tags` du descripteur (`create_vm`, `destroy_vm`). Ne liste
