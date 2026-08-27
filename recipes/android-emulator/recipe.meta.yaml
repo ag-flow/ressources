@@ -1,6 +1,6 @@
 id: android-emulator
 key: fe46f7ec-33f7-4252-b29c-cf224b8cd1af
-version: 3.2.0
+version: 4.0.0
 type: install
 # `type` dit QUAND (build), `scope` dit OÙ : cette recette se pose sur une
 # machine, jamais dans un conteneur — l'émulateur exige /dev/kvm et 20 Go.
@@ -21,7 +21,7 @@ preconditions:
   - path_writable: /dev/kvm
   - disk_free_gb: 30
   - arch: x86_64
-description: "Machine de développement Android complète et autonome (dépendances système, JDK 17, Node 20+, SDK/NDK/CMake, AVD, émulateur démarré en headless, dépôt cloné et app buildée) — recette de HOST : exige /dev/kvm et ~30 Go libres, ne convient pas à un conteneur"
+description: "Machine de développement Android complète et autonome (dépendances système, JDK 17, Node 20+, SDK/NDK/CMake, AVD, dépôt cloné, app buildée et installée sur un émulateur démarré — headless, ou écran publié en noVNC avec display=1) — recette de HOST : exige /dev/kvm et ~30 Go libres, ne convient pas à un conteneur"
 options:
   api_level:
     type: string
@@ -43,10 +43,26 @@ options:
     type: string
     default: "swiftshader_indirect"
     description: "Rendu de l'émulateur : 'swiftshader_indirect' (défaut, logiciel, aucun GPU requis) ou 'host' pour exploiter un GPU en passthrough — dans ce cas /dev/dri est vérifié en précondition et l'installation est refusée s'il manque"
-  headless:
+  target_user:
     type: string
-    default: "1"
-    description: "1 (défaut) = émulateur sans fenêtre. Indépendant du rendu : une machine avec GPU en passthrough n'a pas forcément d'écran. Mettre 0 exige un DISPLAY valide"
+    default: ""
+    description: "Utilisateur qui possédera le SDK et lancera l'émulateur (vide = celui qui applique la recette). Il est ajouté au groupe de /dev/kvm. Appliquée en root sans cette option, la recette poserait le SDK dans /root, hors de portée de l'utilisateur qui doit lancer l'émulateur"
+  display:
+    type: string
+    default: "0"
+    description: "0 (défaut) = émulateur headless, rien à regarder mais rien à installer. 1 = mode écran : Xvfb + x11vnc + noVNC, l'écran s'ouvre dans un navigateur avec souris et clavier — donc le défilement à la molette, impossible via adb. Exige vnc_password, et installe les bibliothèques du binaire fenêtré (libpulse0, libgl1…) que le binaire headless n'utilise pas"
+  vnc_password:
+    type: string
+    default: ""
+    description: "Mot de passe VNC — OBLIGATOIRE si display vaut 1, aucune valeur par défaut : un écran sans mot de passe sur un réseau d'entreprise est un accès ouvert à la machine. Vérifié en précondition"
+  novnc_port:
+    type: string
+    default: "6080"
+    description: "Port web de noVNC — le SEUL exposé. x11vnc tourne en -localhost sur 5901, donc le VNC brut reste injoignable depuis le réseau"
+  screen_size:
+    type: string
+    default: "1440x2700"
+    description: "Résolution de l'affichage virtuel Xvfb. 1440x2700 cadre un profil pixel_6 (1080x2400) avec sa barre d'outils"
   node_major:
     type: string
     default: "20"
