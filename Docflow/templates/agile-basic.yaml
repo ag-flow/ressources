@@ -18,10 +18,13 @@
 # propriétés ; rien n'est modifié). Le sens de la dépendance est tranché : c'est le
 # BACKLOG qui référence la maquette, jamais l'inverse — le template maquettes reste
 # autonome, publiable sans traîner le backlog.
+# Évolution v4 -> v5 : étend le pont maquettes à `atdd`. Un test d'acceptation se
+# rattache typiquement à un ÉTAT précis (`maquette_etat`), pas à l'écran entier.
+# STRICTEMENT ADDITIF (ajout de propriétés sur un type existant).
 # Rappel de frontière : les pipelines de statut sont PROPRES À CHAQUE TYPE
 # (un board `group_by statut` est cohérent par type, pas cross-type). docflow ne
 # porte AUCUNE règle de transition — c'est l'affaire du futur module workflow.
-version: 4
+version: 5
 template: agile-basic
 label: "Projet agile (epic / feature / story / atdd / bug / enabler)"
 
@@ -223,6 +226,18 @@ functional_types:
         type: bool
         required: false
         default: "false"
+      - slug: maquette_ecran              # 38_MREL : cible = ecran (template screen-mockups)
+        label: "Écran maquetté"
+        type: reference
+        target_type: ecran                # « toutes les maquettes de cet écran »
+        max_occurrences: 1000
+        required: false
+      - slug: maquette_etat               # 38_MREL : cible = maquette (état précis)
+        label: "Maquette (état précis)"
+        type: reference
+        target_type: maquette             # « cet état précis »
+        max_occurrences: 1000
+        required: false
 
   # ─── BUG : enfant de epic, pipeline de statut propre (triage -> done) ───
   - slug: bug
