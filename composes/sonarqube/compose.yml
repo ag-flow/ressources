@@ -1,0 +1,58 @@
+# SonarQube Community Build + PostgreSQL dédié.
+#
+# Prérequis HOST (à faire une fois sur le serveur de ressources, avant le
+# déploiement) — Elasticsearch embarqué refuse de démarrer sinon :
+#   sysctl -w vm.max_map_count=524288
+#   sysctl -w fs.file-max=131072
+#   (persister dans /etc/sysctl.d/99-sonarqube.conf)
+# Ces réglages ne sont pas namespacés : un conteneur non privilégié ne peut pas
+# les poser lui-même, et la liste blanche des bind-mounts interdit /proc.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_DB: sonar
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - sonarqube-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonar"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  sonarqube:
+    image: sonarqube:26.9.0.129388-community
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - sonarqube>9000:9000
+    environment:
+      SONAR_JDBC_URL: "jdbc:postgresql://db:5432/sonar"
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: "${DB_PASSWORD}"
+      SONAR_WEB_JAVAOPTS: "${WEB_JAVAOPTS}"
+      SONAR_CE_JAVAOPTS: "${CE_JAVAOPTS}"
+      SONAR_TELEMETRY_ENABLE: "${TELEMETRY}"
+    ulimits:
+      nofile:
+        soft: 131072
+        hard: 131072
+      nproc: 8192
+    volumes:
+      # data = index Elasticsearch + état ; extensions = plugins installés depuis
+      # le Marketplace. Les perdre, c'est réindexer et réinstaller.
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+
+volumes:
+  sonarqube-db:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:

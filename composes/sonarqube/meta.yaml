@@ -1,0 +1,51 @@
+id: sonarqube
+name: SonarQube (Community Build)
+description: >-
+  Serveur d'analyse de qualité et de sécurité du code, avec sa base PostgreSQL
+  dédiée. Interface web sur le port 9000 (compte initial admin/admin, à changer
+  au premier login). Prérequis sur la machine hôte, à poser AVANT le déploiement
+  sinon Elasticsearch refuse de démarrer : vm.max_map_count=524288 et
+  fs.file-max=131072. Compter ~4 Go de RAM et 10 Go de disque. C'est l'instance
+  que le template « sonarqube-mcp » attend dans son paramètre SONARQUBE_URL.
+version: "1"
+tags:
+  - devsecops
+  - sonarqube
+  - qualité
+  - analyse-statique
+image: sonarqube:26.9.0.129388-community
+message_key: service-docker-compose
+parameters:
+  - key: DB_PASSWORD
+    label: "Mot de passe PostgreSQL"
+    description: >-
+      Mot de passe du rôle « sonar » de la base dédiée. Interne au compose (la
+      base n'est pas exposée), mais il est figé dans le volume au premier
+      démarrage : le changer ensuite casse la connexion JDBC.
+    type: secret
+    required: true
+    secret_ref_hint: "sonarqube/db-password"
+  - key: WEB_JAVAOPTS
+    label: "Options JVM du serveur web"
+    description: >-
+      Heap du process web. Monter à -Xmx1g au-delà d'une dizaine de projets ou
+      si l'interface devient lente.
+    type: string
+    required: false
+    default: "-Xmx512m -Xms128m -XX:+HeapDumpOnOutOfMemoryError"
+  - key: CE_JAVAOPTS
+    label: "Options JVM du Compute Engine"
+    description: >-
+      Heap du moteur d'analyse (traitement des rapports scanner). C'est ce
+      process qui manque de mémoire en premier sur les gros dépôts.
+    type: string
+    required: false
+    default: "-Xmx512m -Xms128m -XX:+HeapDumpOnOutOfMemoryError"
+  - key: TELEMETRY
+    label: "Télémétrie SonarSource"
+    description: >-
+      false = aucune donnée d'usage envoyée à SonarSource. Défaut volontaire
+      pour une instance interne.
+    type: bool
+    required: false
+    default: "false"

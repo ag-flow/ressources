@@ -2,4 +2,5 @@ alloy-collector/
 alloy-metrics/
 browserless-chromium/
 searxng/
+sonarqube/
 sonarqube-mcp/
