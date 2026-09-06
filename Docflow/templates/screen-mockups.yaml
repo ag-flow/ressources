@@ -1,0 +1,136 @@
+# Docflow/templates/screen-mockups.yaml — v1
+# Template docflow « Maquettes d'écran » : application ⊃ écran ⊃ maquette.
+# Modèle AUTONOME — il ne connaît ni le backlog ni aucun autre template ; ce sont les
+# backlogs qui le référencent (cf. agile-basic v4, propriétés maquette_ecran / maquette_etat).
+# Le troisième niveau existe parce qu'un écran a des ÉTATS (vide, chargement, erreur,
+# rempli, variante mobile) qui sont des maquettes distinctes du même écran.
+# Briques spec exercées : restricted_list, content_template (35_MTPL).
+# Aucun UUID, tout par slug ; import idempotent et additif.
+# Cf. Docflow/templates/CLAUDE.md pour le contrat complet.
+version: 1
+template: screen-mockups
+label: "Maquettes d'écran (application / écran / maquette)"
+
+functional_types:
+
+  # ─── APPLICATION : racine du bloc, porte la base CSS et les conventions ───
+  # La portée de la base CSS appartient à l'APPLICATION, pas au workspace ni au bloc :
+  # un workspace peut porter plusieurs applications, et plusieurs blocs maquettes.
+  # Pas de statut — c'est un conteneur, pas une entité à cycle de vie.
+  - slug: application
+    parent: null
+    label: Application
+    properties:
+      - slug: mockup_base_artifact
+        label: "Base CSS — artefact mockup-base (id)"
+        type: text
+        required: false
+      - slug: mockup_base_version
+        label: "Version courante de la base CSS"
+        type: text
+        required: false
+      - slug: plateformes
+        label: "Plateformes cibles"
+        type: text
+        required: false
+      - slug: conventions
+        label: "Conventions de l'application"
+        type: text
+        required: false
+
+  # ─── ÉCRAN : unité de discussion avec un PO, et CONTRAT pour un executor ───
+  # Les propriétés de contrat sont typées par convention (énumération, [[…]], chemin) :
+  # un écran est d'abord discuté par des humains, puis donné à une IA qui génère le code.
+  # `notes` existe À CÔTÉ du typé, jamais pour reformuler la route ou les rôles.
+  - slug: ecran
+    parent: application
+    label: Écran
+    content_template: |
+      # {{title}}
+      > Écran créé le {{date}}
+
+      ## Intention
+      ## Parcours amont / aval
+      ## Cas particuliers
+      - [ ] …
+    properties:
+      - slug: statut                      # « ce contrat est-il exécutable ? »
+        label: "Statut — ce contrat est-il exécutable ?"
+        type: restricted_list
+        required: true
+        default: new
+        allowed_values:
+          - { slug: new,        label: "Nouveau",    position: 0, color: "#9AA3AF" }
+          - { slug: draft,      label: "Brouillon",  position: 1, color: "#0EA5E9" }
+          - { slug: validated,  label: "Validé",     position: 2, color: "#22C55E" }
+          - { slug: deprecated, label: "Déprécié",   position: 3, color: "#6B7280" }
+      - slug: route
+        label: "Route (chemin explicite + paramètres)"
+        type: text
+        required: false
+      - slug: roles
+        label: "Rôles (énumération)"
+        type: text
+        required: false
+      - slug: entites
+        label: "Entités liées (références [[…]])"
+        type: text
+        required: false
+      - slug: actions
+        label: Actions
+        type: text
+        required: false
+      - slug: etats
+        label: "États attendus"
+        type: text
+        required: false
+      - slug: notes
+        label: "Notes (prose — à côté du typé, jamais en double)"
+        type: text
+        required: false
+
+  # ─── MAQUETTE : un ÉTAT de l'écran (vide, erreur, mobile…) ───
+  # Le document ne duplique PAS le contenu du HTML : il décrit, l'artefact montre.
+  - slug: maquette
+    parent: ecran
+    label: Maquette
+    content_template: |
+      # {{title}}
+      > État maquetté le {{date}}
+
+      ## Ce que montre cet état
+      ## Décisions de design
+    properties:
+      - slug: statut                      # « ce visuel est-il arrêté ? »
+        label: "Statut — ce visuel est-il arrêté ?"
+        type: restricted_list
+        required: true
+        default: new
+        allowed_values:
+          - { slug: new,        label: "Nouveau",    position: 0, color: "#9AA3AF" }
+          - { slug: draft,      label: "Brouillon",  position: 1, color: "#0EA5E9" }
+          - { slug: validated,  label: "Validé",     position: 2, color: "#22C55E" }
+          - { slug: deprecated, label: "Déprécié",   position: 3, color: "#6B7280" }
+      - slug: artifact_id
+        label: "Artefact HTML mutable (id)"
+        type: text
+        required: true
+      - slug: viewport
+        label: Viewport
+        type: restricted_list
+        required: false
+        default: desktop
+        allowed_values:
+          - { slug: mobile,   label: Mobile,   position: 0 }
+          - { slug: tablette, label: Tablette, position: 1 }
+          - { slug: desktop,  label: Desktop,  position: 2 }
+      - slug: base_version
+        label: "Version de base CSS appliquée"
+        type: text
+        required: false
+
+# ─── Point de couplage volontaire ───────────────────────────────────────────────
+# Ce template ne référence RIEN. Le sens de la dépendance est tranché : c'est le
+# backlog qui référence la maquette (agile-basic v4 : `maquette_ecran` cible `ecran`,
+# `maquette_etat` cible `maquette`). Ne jamais stocker la relation en sens inverse —
+# « quelles features utilisent cet écran ? » se lit par backlinks, à la demande.
