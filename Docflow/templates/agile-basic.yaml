@@ -13,14 +13,24 @@
 # strict du diff (le `default` change) — assumé ici : aucun workspace ne consomme
 # encore cette v2 en pratique. Un workspace ayant déjà importé la v2 verra cet import
 # bloqué en conflit tant qu'il n'a pas migré manuellement.
-# Évolution v3 -> v4 : ouvre le pont vers le template `screen-mockups` — deux propriétés
-# `reference` sur `feature` et `story`. STRICTEMENT ADDITIF au sens du diff (ajout de
-# propriétés ; rien n'est modifié). Le sens de la dépendance est tranché : c'est le
-# BACKLOG qui référence la maquette, jamais l'inverse — le template maquettes reste
-# autonome, publiable sans traîner le backlog.
-# Évolution v4 -> v5 : étend le pont maquettes à `atdd`. Un test d'acceptation se
-# rattache typiquement à un ÉTAT précis (`maquette_etat`), pas à l'écran entier.
-# STRICTEMENT ADDITIF (ajout de propriétés sur un type existant).
+# Évolution v3 -> v4 : ajoute `llm-model` sur `epic` — le modèle retenu pour traiter
+# l'epic (convention déjà en usage sur le workspace a2a, remontée ici pour être
+# disponible dans tout nouveau workspace projet). Ajout STRICTEMENT additif au sens du
+# diff : nouvelle propriété sur un type existant, rien d'autre n'est touché.
+#   ⚠ Un workspace ayant déjà créé cette propriété à la main verra l'import bloqué en
+#   conflit si le slug concorde mais pas la définition (allowed_values, position,
+#   color, required, default). Vérifier avant d'importer sur un tel workspace.
+# Le modèle est porté par l'EPIC seule, volontairement : c'est l'unité de cadrage.
+# Un besoin de surcharge au niveau `feature` resterait un ajout additif, donc une v5
+# possible sans casse — inutile de l'anticiper ici.
+# Évolution v4 -> v5 : ouvre le pont vers le template `screen-mockups` — deux propriétés
+# `reference` (`maquette_ecran` cible `ecran`, `maquette_etat` cible `maquette`) sur
+# `feature`, `story` et `atdd`. STRICTEMENT ADDITIF. Le sens de la dépendance est
+# tranché : c'est le BACKLOG qui référence la maquette, jamais l'inverse — le template
+# maquettes reste autonome, publiable sans traîner le backlog.
+#   ⚠ Cette v5 reprend la v4 « llm-model » telle qu'installée côté serveur : le fichier
+#   de galerie était resté en v3 et avait divergé. Ne jamais rebaser cette lignée sans
+#   récupérer d'abord la v courante par get_template_yaml.
 # Rappel de frontière : les pipelines de statut sont PROPRES À CHAQUE TYPE
 # (un board `group_by statut` est cohérent par type, pas cross-type). docflow ne
 # porte AUCUNE règle de transition — c'est l'affaire du futur module workflow.
@@ -90,6 +100,16 @@ functional_types:
           - { slug: cadre,    label: "Cadré",    position: 2, color: "#6366F1" }
           - { slug: en_cours, label: "En cours", position: 3, color: "#0EA5E9" }
           - { slug: done,     label: "Done",     position: 4, color: "#22C55E" }
+      - slug: llm-model                   # v4 : modèle retenu pour traiter l'epic
+        label: "Modèle LLM"
+        type: restricted_list
+        required: true
+        default: sonnet
+        allowed_values:
+          - { slug: haiku,  label: "Haiku — tâches simples, volume",        position: 0, color: "#9AA3AF" }
+          - { slug: sonnet, label: "Sonnet — implémentation courante",      position: 1, color: "#0EA5E9" }
+          - { slug: opus,   label: "Opus — conception, raisonnement long",  position: 2, color: "#6366F1" }
+          - { slug: fable,  label: "Fable — cadrage exploratoire",          position: 3, color: "#F59E0B" }
       - slug: budget_jours
         label: "Budget (jours)"
         type: int
