@@ -762,6 +762,31 @@ REMOTE
     echo "    Effectif au prochain démarrage de session (déjà le cas pour une VM neuve)."
 fi
 
+# ─── A.10e — git : contournement HTTP/2 GitHub (bug f21f9db6) ────────────────
+# git 2.39.5 (bookworm, posé en A.10) échoue contre GitHub en HTTP/2 : le POST
+# git-upload-pack revient 401 sur un dépôt PUBLIC et git réclame un identifiant.
+# Mesuré : 6 échecs sur 6 en HTTP/2, 10 succès sur 10 en HTTP/1.1.
+#
+# Posé au niveau système, donc pour TOUS les outils de la machine — un
+# contournement dans un script de déploiement ne couvre que ce script, alors que
+# les recettes de host (android-emulator clone trois dépôts) sont exposées pareil.
+# Script mutualisé avec le durcissement des VM déjà en service.
+GIT_HTTP_URL="https://raw.githubusercontent.com/ag-flow/ressources/refs/heads/main/hypervisors/proxmox/harden-git-http.sh"
+echo ""
+echo "==> A.10e — Contournement HTTP/2 GitHub pour git..."
+GIT_HTTP_TMP=$(mktemp /tmp/harden-git-http-XXXXXX.sh)
+if curl -fsSL "$GIT_HTTP_URL" -o "$GIT_HTTP_TMP" 2>/dev/null; then
+    if ssh "${SSH_OPTS[@]}" "${CI_USER}@${IP_ADDR}" "${SUDO} bash -s" < "$GIT_HTTP_TMP"; then
+        echo "    HTTP/1.1 forcé vers github.com (/etc/git/http2-github.inc)."
+    else
+        echo "AVERTISSEMENT : harden-git-http.sh a échoué sur la VM — à rejouer à la main." >&2
+        echo "  Sans lui, un clone anonyme depuis GitHub peut réclamer un identifiant." >&2
+    fi
+else
+    echo "AVERTISSEMENT : $GIT_HTTP_URL introuvable — étape A.10e ignorée." >&2
+fi
+rm -f "$GIT_HTTP_TMP"
+
 # ─── A.11 — Vérifier et finaliser le hostname ────────────────────────────────
 echo ""
 echo "==> A.11 — Vérification du hostname et de /etc/hosts..."

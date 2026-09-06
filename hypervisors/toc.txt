@@ -6,8 +6,10 @@
 # (HypervisorType.add_script / destroy_script) — pas d'import automatique.
 # Un même script peut servir plusieurs descripteurs : vm-memory.sh porte
 # l'ajout et le retrait, qui ne diffèrent que par le signe du delta.
-# Fichier compagnon non listé ici : proxmox/harden-networkd.sh, récupéré au
-# runtime par clone-vm-node.sh (étape A.10c) et non par le portail.
+# Fichiers compagnons non listés ici : proxmox/harden-networkd.sh (étape A.10c)
+# et proxmox/harden-git-http.sh (étape A.10e), récupérés au runtime par
+# clone-vm-node.sh et non par le portail. Tous deux se rejouent seuls sur une VM
+# déjà en service : sudo bash <script>.
 proxmox/clone-vm-node.json | proxmox | create_vm | Clone un template cloud-init et configure un nœud Docker (étapes A.1–A.11)
 proxmox/destroy-vm-node.json | proxmox | destroy_vm | Arrête et supprime une VM Proxmox par son VMID
 proxmox/vm-disk-add.json | proxmox | vm_disk_add | Agrandit le disque d'une VM (+10G) — un disque ne se réduit pas
