@@ -1,0 +1,222 @@
+# Docflow/templates/referentiel-apprentissage.yaml — version 1
+#
+# Référentiel d'apprentissage : arbre versionné des savoirs prescrits.
+# Le programme scolaire d'un pays en est la première instance, mais rien ici
+# n'est spécifique au scolaire (certification, apprentissage libre entrent
+# dans la même structure).
+#
+# Un référentiel est identifié par (pays, millésime) et n'est JAMAIS muté en
+# place : un nouveau texte officiel = un nouvel arbre sous un nouveau
+# `referentiel`. Les annotations posées par les apprenants restent donc
+# valides, épinglées au millésime qu'elles visaient.
+#
+# Destiné à un workspace PARTAGÉ en lecture. Les workspaces d'apprenants
+# pointent ces nœuds par la clé texte `cle`, jamais par `reference` (une
+# reference ne franchit pas la frontière de workspace).
+#
+# Briques utilisées : héritage abstrait (base_noeud), hiérarchie parent,
+# type date, type int, restricted_list, contraintes pattern/min/max,
+# content_template.
+
+version: 1
+template: referentiel-apprentissage
+label: "Référentiel d'apprentissage (pays, millésime, arbre des connaissances)"
+
+functional_types:
+
+  # ─── BASE_NOEUD : socle commun à tous les nœuds de l'arbre ───
+  - slug: base_noeud
+    label: "Nœud de référentiel"
+    abstract: true
+    properties:
+      - slug: cle
+        label: "Clé canonique"
+        type: text
+        required: true
+        constraints:
+          - kind: pattern
+            value: "^[a-z0-9][a-z0-9_/-]*$"
+            message: "minuscules, chiffres, tiret, souligné et slash uniquement — ex. fr/2026/cycle4/maths/pythagore"
+      - slug: ordre
+        label: "Ordre d'affichage"
+        type: int
+        required: false
+        constraints:
+          - kind: min
+            value: "0"
+            message: "l'ordre ne peut pas être négatif"
+
+  # ─── REFERENTIEL : racine — un pays, un millésime, une autorité ───
+  - slug: referentiel
+    label: "Référentiel"
+    parent: null
+    properties:
+      - slug: cle
+        label: "Clé canonique"
+        type: text
+        required: true
+        constraints:
+          - kind: pattern
+            value: "^[a-z0-9][a-z0-9_/-]*$"
+            message: "ex. fr/2026 — sert de préfixe à toutes les clés de l'arbre"
+      - slug: pays
+        label: "Pays"
+        type: text
+        required: true
+        constraints:
+          - kind: pattern
+            value: "^[a-z]{2}$"
+            message: "code ISO 3166-1 alpha-2 en minuscules — fr, be, ca"
+      - slug: millesime
+        label: "Millésime"
+        type: int
+        required: true
+        constraints:
+          - kind: min
+            value: "1900"
+            message: "millésime invraisemblable"
+          - kind: max
+            value: "2200"
+            message: "millésime invraisemblable"
+      - slug: langue
+        label: "Langue du texte"
+        type: text
+        required: false
+        constraints:
+          - kind: pattern
+            value: "^[a-z]{2}$"
+            message: "code ISO 639-1 en minuscules — fr, en, nl"
+      - slug: autorite
+        label: "Autorité émettrice"
+        type: text
+        required: false
+      - slug: reference_officielle
+        label: "Référence du texte"
+        type: text
+        required: false
+      - slug: date_applicabilite
+        label: "Applicable à partir du"
+        type: date
+        required: false
+      - slug: nature
+        label: "Nature du référentiel"
+        type: restricted_list
+        required: false
+        default: scolaire
+        allowed_values:
+          - slug: scolaire
+            label: "Programme scolaire"
+            position: 0
+          - slug: certification
+            label: "Certification / examen"
+            position: 1
+          - slug: libre
+            label: "Apprentissage libre"
+            position: 2
+      - slug: statut
+        label: "Statut"
+        type: restricted_list
+        required: false
+        default: en_preparation
+        allowed_values:
+          - slug: en_preparation
+            label: "En préparation"
+            position: 0
+            color: "#9AA3AF"
+          - slug: en_vigueur
+            label: "En vigueur"
+            position: 1
+            color: "#22C55E"
+          - slug: abroge
+            label: "Abrogé"
+            position: 2
+            color: "#6B7280"
+    content_template: |
+      # {{title}}
+      > Importé le {{date}}
+
+      ## Périmètre
+      ## Source officielle
+      ## Écarts connus avec le texte
+      - [ ] …
+
+  # ─── NIVEAU : année ou palier du cursus (6e, seconde, cycle 4…) ───
+  - slug: niveau
+    label: "Niveau"
+    inherit: base_noeud
+    parent: referentiel
+    properties:
+      - slug: cycle
+        label: "Cycle"
+        type: text
+        required: false
+
+  # ─── DOMAINE : discipline ou champ (mathématiques, histoire…) ───
+  - slug: domaine
+    label: "Domaine"
+    inherit: base_noeud
+    parent: niveau
+
+  # ─── OBJECTIF : attendu de fin de cycle, grand thème ───
+  - slug: objectif
+    label: "Objectif"
+    inherit: base_noeud
+    parent: domaine
+
+  # ─── CONNAISSANCE : la maille cartable — ce sur quoi porte une carte ───
+  - slug: connaissance
+    label: "Connaissance"
+    inherit: base_noeud
+    parent: objectif
+    properties:
+      - slug: code_stable
+        label: "Code stable inter-millésimes"
+        type: text
+        required: false
+        constraints:
+          - kind: pattern
+            value: "^[a-z0-9][a-z0-9_-]*$"
+            message: "identité conservée d'un millésime à l'autre — permet aux cartes de survivre à une réforme"
+      - slug: nature
+        label: "Nature"
+        type: restricted_list
+        required: false
+        default: savoir
+        allowed_values:
+          - slug: savoir
+            label: "Savoir (rappel)"
+            position: 0
+          - slug: savoir_faire
+            label: "Savoir-faire (procédural)"
+            position: 1
+          - slug: methode
+            label: "Méthode / démarche"
+            position: 2
+      - slug: grain
+        label: "Grain"
+        type: restricted_list
+        required: false
+        default: atomique
+        allowed_values:
+          - slug: atomique
+            label: "Atomique — cartable tel quel"
+            position: 0
+          - slug: composite
+            label: "Composite — à décomposer avant d'être cartable"
+            position: 1
+    content_template: |
+      # {{title}}
+      > Extrait du référentiel, {{date}}
+
+      ## Formulation officielle
+      ## Ce que l'élève doit savoir faire
+      ## Erreurs fréquentes
+      - [ ] …
+
+# ────────────────────────────────────────────────────────────────────────────
+# Point de couplage volontaire (documenté, non codé) :
+# les workspaces d'apprenants annotent leurs cours avec la valeur de `cle`
+# d'une `connaissance` — clé texte, pas `reference`, car la cible vit dans un
+# autre workspace. L'espace de noms `local/<apprenant>/…` est réservé aux
+# connaissances hors référentiel et n'apparaît jamais dans ce fichier.
+# ────────────────────────────────────────────────────────────────────────────
