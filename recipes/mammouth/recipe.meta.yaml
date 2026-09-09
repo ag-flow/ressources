@@ -1,0 +1,10 @@
+id: mammouth
+key: 9e1b494a-3190-4581-9e07-33405ffc204f
+version: 1.0.0
+description: "Install Mammouth Code CLI — MCP gateway devpod + provider Mammouth AI (binaire autonome, sans Node.js)"
+type: install
+requires_secrets:
+  - path: llm/mammouth_api_key
+    env: MAMMOUTH_API_KEY
+  - path: mcp/gateway_token
+    env: MCP_GATEWAY_TOKEN

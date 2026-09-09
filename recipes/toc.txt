@@ -15,6 +15,7 @@ go/
 goose/
 java/
 kubectl/
+mammouth/
 nodejs/
 opencode/
 php/

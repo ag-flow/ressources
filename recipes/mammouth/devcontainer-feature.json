@@ -1,0 +1,6 @@
+{
+  "id": "mammouth",
+  "version": "1.0.0",
+  "name": "Mammouth Code CLI",
+  "description": "Install Mammouth Code CLI — MCP gateway devpod + provider Mammouth AI (binaire autonome, sans Node.js)"
+}
