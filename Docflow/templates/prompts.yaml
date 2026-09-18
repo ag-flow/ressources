@@ -1,4 +1,4 @@
-# Docflow/templates/prompts.yaml — v1
+# Docflow/templates/prompts.yaml — v2
 # Template docflow « Prompts » : référentiel rédactionnel des prompts épinglés par le
 # service workflow. Un document = un prompt ; son CORPS MARKDOWN est le prompt lui-même.
 # Structure clonée dans un workspace par l'import (cible pressentie : bloc Prompts de
@@ -14,8 +14,8 @@
 # Conséquences directes, et raison d'être de la maigreur de ce template :
 #   • aucune clé d'identification ici — le titre reste librement modifiable ;
 #   • ni `categorie` ni `version` : les dupliquer créerait deux sources de vérité vouées
-#     à diverger. Le bruit du sélecteur de pages se règle par un filtre sur le TYPE
-#     FONCTIONNEL `prompt`, pas par un filtre sur la catégorie.
+#     à diverger. Le bruit du sélecteur de pages se règle par un filtre sur les TYPES
+#     FONCTIONNELS de ce template, pas par un filtre sur la catégorie.
 #
 # `culture` fait EXCEPTION et figure bien ici : ce n'est pas une clé d'identification
 # recopiée, c'est un attribut INTRINSÈQUE du texte — une page est écrite dans une langue,
@@ -27,20 +27,80 @@
 # révèle réel à l'usage, le rouvrir explicitement plutôt que de dupliquer l'attribut par
 # précaution.
 #
+# ─── v2 — Hiérarchie : un prompt SOURCE, ses TRADUCTIONS en enfants ──────────────
+# La v1 posait une liste plate et renvoyait les variantes de langue au référentiel
+# workflow. Ça tenait tant qu'une langue = un prompt indépendant ; ça ne tient plus dès
+# qu'on veut écrire LE MÊME prompt en plusieurs langues : rien ne reliait les deux
+# documents, et la correspondance ne vivait que dans une convention de titre.
+#
+# La v2 matérialise ce lien par la HIÉRARCHIE DOCUMENTAIRE :
+#
+#   prompt  (le prompt dans sa langue d'origine — c'est ICI qu'on écrit ce qu'il fait)
+#   └── prompt_translation  (le même prompt, une autre langue, un document par langue)
+#
+# Le NIVEAU 1 PORTE LE SENS : la langue d'origine (`culture`, défaut `fr`), ce à quoi
+# sert le prompt (`usage`) et les placeholders qu'il consomme (`expected_variables`).
+# Son corps est un prompt pleinement utilisable, pas une fiche descriptive — une famille
+# d'un seul document, sans aucune traduction, est le cas nominal.
+#
+# Le parent documentaire EST le lien vers la source : n'ajoute jamais en plus une
+# propriété `reference` vers le prompt source, elle dirait la même chose une deuxième
+# fois et les deux divergeraient.
+#
+# Pourquoi DEUX NIVEAUX et pas un type récursif sur lui-même : la hiérarchie docflow
+# donne à un type UN slug de parent — un type qui se déclarerait son propre parent
+# n'aurait plus de racine créable. Deux niveaux suffisent d'ailleurs au besoin réel :
+# on traduit depuis la source, jamais depuis une traduction (traduire une traduction
+# accumule les dérives sans que personne ne puisse les arbitrer). Si un jour une
+# traduction devient la référence d'une famille, elle est promue en `prompt` source.
+#
+# Pourquoi la traduction ne porte QUE `status` et `culture` : `usage` et
+# `expected_variables` décrivent le PROMPT, pas la langue dans laquelle il est écrit.
+# Les recopier sur chaque traduction, c'est exactement la duplication refusée plus haut
+# pour `categorie` et `version` — avec en prime un piège propre aux placeholders : les
+# clés `{...}` NE SE TRADUISENT PAS. Elles se lisent sur le document parent, qui fait
+# foi ; une traduction dont le jeu de placeholders diffère de sa source est un défaut,
+# pas une variante.
+#
+# Deux règles qu'aucun mécanisme docflow ne porte, et qui restent donc de la discipline :
+#   • UNE SEULE traduction par langue sous un même prompt — rien ne vérifie l'unicité ;
+#   • la culture d'une traduction est censée différer de celle de sa source (d'où
+#     l'absence délibérée de `default` sur `culture` côté traduction : il faut choisir).
+#
+# ─── v2 — Slugs en anglais (rupture assumée avec la v1) ──────────────────────────
+# TOUS les slugs passent en anglais : types, propriétés ET valeurs de listes. La v1
+# portait `statut` / `variables_attendues` / `brouillon` / `actif` / `deprecie`, en
+# contradiction avec la convention du dépôt (slugs anglais, LABELS en français — les
+# labels restent donc en français, ce sont eux que l'utilisateur lit).
+#
+# Ce n'est PAS un changement additif : pour le moteur de diff, un slug renommé est un
+# retrait (ignoré, jamais supprimé) doublé d'un ajout. Un workspace qui détient déjà la
+# v1 ne verra donc rien échouer, mais gardera les propriétés `statut` et
+# `variables_attendues` EN DOUBLON à côté des nouvelles. Avant de réimporter :
+# supprimer côté workspace le type `prompt` (ou au moins ces deux propriétés). Le bloc
+# Prompts de `globals` est vide à ce jour — zéro document, donc zéro perte.
+#
+# ─── Conséquence côté épinglage (à répercuter, hors de ce template) ──────────────
+# Un prompt épinglable est désormais un document de type `prompt` OU `prompt_translation`.
+# Un sélecteur qui filtrerait sur le seul type `prompt` rendrait toutes les traductions
+# invisibles et inépinglables. L'épinglage reste une référence vers UN document précis,
+# et c'est la culture de CE document qui doit coïncider avec celle de l'entrée du
+# référentiel workflow.
+#
 # ─── Pourquoi PAS de content_template ────────────────────────────────────────────
 # Le corps du document est consommé VERBATIM comme prompt. Un squelette de sections
 # (« ## Contexte », « ## Objectif ») serait injecté tel quel dans l'appel au modèle.
 # Le contexte rédactionnel vit donc dans les propriétés `usage` et
-# `variables_attendues`, à CÔTÉ du corps, jamais dedans.
-version: 1
+# `expected_variables`, à CÔTÉ du corps, jamais dedans.
+version: 2
 template: prompts
 label: "Référentiel de prompts (prompt)"
 
 functional_types:
 
-  # ─── PROMPT : racine du bloc, un document = un prompt épinglable ───
-  # Pas de hiérarchie : un bloc Prompts est une LISTE PLATE. Les variantes d'un même
-  # prompt (culture, version) sont des entrées du référentiel workflow, pas des enfants.
+  # ─── PROMPT : racine du bloc, le prompt dans sa langue d'origine ───
+  # Niveau 1 = le sens : ce que fait le prompt, ce qu'il consomme, dans quelle langue il
+  # a été pensé. Les traductions n'en déclinent que le texte.
   - slug: prompt
     parent: null
     label: Prompt
@@ -49,32 +109,34 @@ functional_types:
       # État RÉDACTIONNEL, usage docflow uniquement. Ne pilote rien côté workflow :
       # c'est l'épinglage depuis le référentiel qui met un prompt en service, pas ce
       # statut. Il dit « ce texte est-il prêt à être épinglé ? », rien de plus.
-      - slug: statut
+      - slug: status
         label: "Statut — ce texte est-il prêt à être épinglé ?"
         type: restricted_list
         required: true
-        default: brouillon
+        default: draft
         allowed_values:
-          - { slug: brouillon, label: "Brouillon", position: 0, color: "#0EA5E9" }
-          - { slug: actif,     label: "Actif",     position: 1, color: "#22C55E" }
-          - { slug: deprecie,  label: "Déprécié",  position: 2, color: "#6B7280" }
+          - { slug: draft,      label: "Brouillon", position: 0, color: "#0EA5E9" }
+          - { slug: active,     label: "Actif",     position: 1, color: "#22C55E" }
+          - { slug: deprecated, label: "Déprécié",  position: 2, color: "#6B7280" }
 
       # Placeholders `{clé}` que le corps suppose résolus au moment du rendu. Texte
       # libre volontairement : la liste fait foi côté workflow (résolution effective),
       # ici elle sert au rédacteur — un prompt dont on ignore les entrées est inéditable.
-      - slug: variables_attendues
+      # Vaut pour TOUTE la famille : les traductions ne la redéclarent pas (v2).
+      - slug: expected_variables
         label: "Variables attendues (placeholders {clé})"
         type: text
         required: false
 
       # Langue du TEXTE porté par ce document — pas la culture de l'entrée du référentiel,
       # même si les deux doivent coïncider à l'épinglage. Deux langues d'un même prompt =
-      # deux documents, distingués ici plutôt que par une convention de titre.
+      # deux documents : la langue d'origine ici, ses traductions en enfants.
       #
       # Jeu de valeurs : les VINGT-CINQ LANGUES LES PLUS UTILISÉES SUR INTERNET,
       # mesurées en PART DE CONTENU WEB (W3Techs — proportion des sites dont c'est la
       # langue). Clés en ISO 639-1 sur deux lettres, même convention que la culture
-      # des templates Jinja du portail (`^[a-z]{2}$`).
+      # des templates Jinja du portail (`^[a-z]{2}$`) — et déjà neutres/anglaises, donc
+      # conformes à la règle des slugs anglais sans rien avoir à renommer.
       #
       # Le critère est délibéré et change le résultat : mesuré en NOMBRE D'INTERNAUTES
       # plutôt qu'en contenu publié, le chinois et l'arabe seraient bien plus haut, et
@@ -92,12 +154,16 @@ functional_types:
       #
       # Ajouter une langue plus tard reste ADDITIF (nouvelle allowed_value + bump de
       # version), à insérer à sa place alphabétique ; en RETIRER une est un conflit.
+      #
+      # L'ANCRE YAML `&cultures` est reprise telle quelle par `prompt_translation`
+      # (`*cultures`) : les deux types partagent forcément le même jeu de langues, une
+      # langue ajoutée ici l'est des deux côtés. Ne recopie jamais cette liste à la main.
       - slug: culture
         label: "Culture — langue de rédaction du prompt"
         type: restricted_list
         required: true
         default: fr
-        allowed_values:
+        allowed_values: &cultures
           - { slug: de, label: "Allemand" }
           - { slug: en, label: "Anglais" }
           - { slug: ar, label: "Arabe" }
@@ -126,15 +192,51 @@ functional_types:
 
       # À quoi sert ce prompt et dans quelles phases il a vocation à être branché.
       # Se lit AVANT le corps, par quelqu'un qui cherche s'il doit en écrire un nouveau.
+      # Vaut pour TOUTE la famille : les traductions ne la redéclarent pas (v2).
       - slug: usage
         label: "Usage — à quoi sert ce prompt, où il se branche"
         type: text
         required: false
 
+  # ─── PROMPT_TRANSLATION : le même prompt dans une autre langue ───
+  # Enfant documentaire d'un `prompt`. Son CORPS est le prompt traduit, consommé verbatim
+  # comme celui de sa source — c'est un prompt à part entière, épinglable au même titre,
+  # pas une annexe. Il n'hérite volontairement d'aucun type abstrait : son cycle de vie
+  # est celui d'une TRADUCTION (à traduire → relue → active), pas celui d'une rédaction.
+  - slug: prompt_translation
+    parent: prompt
+    label: "Traduction de prompt"
+    properties:
+
+      # Pipeline PROPRE à la traduction — jamais celui du prompt source. Il ajoute les
+      # deux états que la rédaction n'a pas : la coquille créée avant traduction, et la
+      # relecture contre la source (un prompt traduit mais non confronté à son original
+      # est la façon la plus discrète de mettre un modèle en défaut en production).
+      - slug: status
+        label: "Statut — où en est cette traduction ?"
+        type: restricted_list
+        required: true
+        default: to_translate
+        allowed_values:
+          - { slug: to_translate, label: "À traduire",           position: 0, color: "#9AA3AF" }
+          - { slug: draft,        label: "Brouillon",            position: 1, color: "#0EA5E9" }
+          - { slug: to_review,    label: "À relire (vs source)", position: 2, color: "#F59E0B" }
+          - { slug: active,       label: "Actif",                position: 3, color: "#22C55E" }
+          - { slug: deprecated,   label: "Déprécié",             position: 4, color: "#6B7280" }
+
+      # Même jeu de langues que la source (ancre `*cultures`), mais SANS `default` :
+      # une traduction qui garderait silencieusement la langue par défaut serait une
+      # traduction dans la langue de l'original. Le choix doit être posé.
+      - slug: culture
+        label: "Culture — langue de cette traduction"
+        type: restricted_list
+        required: true
+        allowed_values: *cultures
+
 # ─────────────────────────────────────────────────────────────────────────────────
 # Rappel (non modélisé ici) : ce template ne référence RIEN et n'est référencé par
 # aucun autre template. Le lien prompt ↔ définition de workflow est porté par le
-# référentiel workflow (épinglage par référence vers le document). Ne jamais stocker
-# la relation en sens inverse ici — « quelles définitions utilisent ce prompt ? » se
-# lit côté workflow, à la demande.
+# référentiel workflow (épinglage par référence vers le document — source OU
+# traduction). Ne jamais stocker la relation en sens inverse ici — « quelles
+# définitions utilisent ce prompt ? » se lit côté workflow, à la demande.
 # ─────────────────────────────────────────────────────────────────────────────────
