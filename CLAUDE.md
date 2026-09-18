@@ -816,8 +816,15 @@ Si l'un de ces écarts est comblé côté backend, mets à jour cette section en
   fichier qui en contient plusieurs — surtout utile passé 3-4 types.
 - **Types abstraits nommés `base_*`** (`base_statusable`, `base_editorial`) : un socle = un statut
   ou un cycle de vie commun factorisé, jamais de propriété métier spécifique dedans.
-- **Slugs en `snake_case` anglais/neutre, labels en français** lisible pour l'utilisateur final
-  (`slug: budget_jours`, `label: "Budget (jours)"`).
+- **Slugs TOUJOURS en anglais (`snake_case`), labels en français.** La règle porte sur les
+  quatre niveaux de slug — template, type, propriété **et `allowed_values`** — et c'est ce
+  dernier qu'on oublie : un pipeline `brouillon` / `actif` / `deprecie` viole la convention
+  aussi sûrement qu'une propriété `variables_attendues`. Les `label`, eux, restent en français :
+  ce sont eux que l'utilisateur lit (`slug: budget_days` + `label: "Budget (jours)"` ;
+  `slug: draft` + `label: "Brouillon"`). Corriger après coup coûte cher : un slug renommé
+  n'est **pas** un changement additif — le moteur de diff y voit un retrait (ignoré, jamais
+  supprimé) doublé d'un ajout, donc tout workspace ayant importé l'ancienne version garde les
+  deux propriétés **en doublon** jusqu'à un nettoyage manuel du type.
 - **Un type « annuaire »** (`personne`, `contributeur`) sans `statut` ni cycle de vie, seulement
   pour servir de cible à des propriétés `reference` — pattern à reproduire plutôt que de pointer
   une `reference` vers un type qui a un pipeline de statut qui n'a pas de sens pour lui.
@@ -843,6 +850,8 @@ Si l'un de ces écarts est comblé côté backend, mets à jour cette section en
 ### 8.12 Checklist avant de livrer un template docflow
 
 - [ ] Chaque `slug` (template, type, propriété, allowed_value) respecte `^[a-z0-9][a-z0-9_-]*$`.
+- [ ] Chaque `slug` est en **anglais**, `allowed_values` comprises ; seuls les `label` sont
+      en français.
 - [ ] Aucun UUID nulle part — tout est par slug, résolu à l'import.
 - [ ] Aucun type `abstract: true` n'est utilisé comme `target_type` ou comme `parent`.
 - [ ] Chaînes `inherit` acycliques ; overrides = remplacement complet assumé (pas de fusion).
