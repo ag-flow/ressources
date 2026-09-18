@@ -71,12 +71,22 @@ functional_types:
       # même si les deux doivent coïncider à l'épinglage. Deux langues d'un même prompt =
       # deux documents, distingués ici plutôt que par une convention de titre.
       #
-      # Jeu de valeurs : les DIX LANGUES LES PLUS PARLÉES au monde (locuteurs natifs +
-      # seconde langue), dans cet ordre de rang. Clés en ISO 639-1 sur deux lettres —
-      # même convention que la culture des templates Jinja du portail (`^[a-z]{2}$`).
-      # `fr` est le défaut (langue de rédaction usuelle ici), pas le premier de la liste :
-      # l'ordre dit le rang, le défaut dit l'usage.
+      # Jeu de valeurs : les QUINZE LANGUES LES PLUS UTILISÉES SUR INTERNET, mesurées
+      # en PART DE CONTENU WEB (W3Techs — proportion des sites dont c'est la langue),
+      # dans cet ordre. Clés en ISO 639-1 sur deux lettres, même convention que la
+      # culture des templates Jinja du portail (`^[a-z]{2}$`).
       #
+      # Le critère est délibéré et change le résultat : mesuré en NOMBRE D'INTERNAUTES
+      # plutôt qu'en contenu publié, le chinois et l'arabe remontent très haut, le
+      # hindi entre dans la liste, et l'allemand ou le néerlandais en sortent. La part
+      # de contenu a été retenue parce qu'un prompt est du TEXTE ÉCRIT, pas un public.
+      #
+      # `fr` est le DÉFAUT (langue de rédaction usuelle ici), pas le premier de la
+      # liste : l'ordre dit la mesure, le défaut dit l'usage.
+      #
+      # Les rangs sont un instantané, pas une vérité stable — les écarts sous la 5e
+      # place tiennent dans quelques dixièmes de point et bougent d'une édition à
+      # l'autre. Ils sont ici pour donner un ordre lisible, pas pour faire autorité.
       # Ajouter une langue plus tard est ADDITIF (nouvelle allowed_value + bump de
       # version). En RETIRER une, ou changer une `position`, est un CONFLIT qui bloque
       # l'import entier chez qui a déjà la version précédente : cet ordre est définitif.
@@ -86,16 +96,21 @@ functional_types:
         required: true
         default: fr
         allowed_values:
-          - { slug: en, label: "Anglais",          position: 0 }
-          - { slug: zh, label: "Chinois mandarin", position: 1 }
-          - { slug: hi, label: "Hindi",            position: 2 }
-          - { slug: es, label: "Espagnol",         position: 3 }
-          - { slug: ar, label: "Arabe",            position: 4 }
-          - { slug: fr, label: "Français",         position: 5 }
-          - { slug: bn, label: "Bengali",          position: 6 }
-          - { slug: pt, label: "Portugais",        position: 7 }
-          - { slug: ru, label: "Russe",            position: 8 }
-          - { slug: ur, label: "Ourdou",           position: 9 }
+          - { slug: en, label: "Anglais",     position: 0 }
+          - { slug: es, label: "Espagnol",    position: 1 }
+          - { slug: de, label: "Allemand",    position: 2 }
+          - { slug: ja, label: "Japonais",    position: 3 }
+          - { slug: fr, label: "Français",    position: 4 }
+          - { slug: ru, label: "Russe",       position: 5 }
+          - { slug: pt, label: "Portugais",   position: 6 }
+          - { slug: it, label: "Italien",     position: 7 }
+          - { slug: nl, label: "Néerlandais", position: 8 }
+          - { slug: pl, label: "Polonais",    position: 9 }
+          - { slug: tr, label: "Turc",        position: 10 }
+          - { slug: fa, label: "Persan",      position: 11 }
+          - { slug: zh, label: "Chinois",     position: 12 }
+          - { slug: vi, label: "Vietnamien",  position: 13 }
+          - { slug: id, label: "Indonésien",  position: 14 }
 
       # À quoi sert ce prompt et dans quelles phases il a vocation à être branché.
       # Se lit AVANT le corps, par quelqu'un qui cherche s'il doit en écrire un nouveau.
