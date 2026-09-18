@@ -71,46 +71,58 @@ functional_types:
       # même si les deux doivent coïncider à l'épinglage. Deux langues d'un même prompt =
       # deux documents, distingués ici plutôt que par une convention de titre.
       #
-      # Jeu de valeurs : les QUINZE LANGUES LES PLUS UTILISÉES SUR INTERNET, mesurées
-      # en PART DE CONTENU WEB (W3Techs — proportion des sites dont c'est la langue),
-      # dans cet ordre. Clés en ISO 639-1 sur deux lettres, même convention que la
-      # culture des templates Jinja du portail (`^[a-z]{2}$`).
+      # Jeu de valeurs : les VINGT-CINQ LANGUES LES PLUS UTILISÉES SUR INTERNET,
+      # mesurées en PART DE CONTENU WEB (W3Techs — proportion des sites dont c'est la
+      # langue). Clés en ISO 639-1 sur deux lettres, même convention que la culture
+      # des templates Jinja du portail (`^[a-z]{2}$`).
       #
       # Le critère est délibéré et change le résultat : mesuré en NOMBRE D'INTERNAUTES
-      # plutôt qu'en contenu publié, le chinois et l'arabe remontent très haut, le
-      # hindi entre dans la liste, et l'allemand ou le néerlandais en sortent. La part
-      # de contenu a été retenue parce qu'un prompt est du TEXTE ÉCRIT, pas un public.
+      # plutôt qu'en contenu publié, le chinois et l'arabe seraient bien plus haut, et
+      # le hindi entrerait — il est absent ici malgré ~600 M de locuteurs, pour ~0,2 %
+      # du contenu web. La part de contenu a été retenue parce qu'un prompt est du
+      # TEXTE ÉCRIT, pas un public.
       #
-      # `fr` est le DÉFAUT (langue de rédaction usuelle ici), pas le premier de la
-      # liste : l'ordre dit la mesure, le défaut dit l'usage.
+      # ORDRE ALPHABÉTIQUE des labels, et AUCUNE `position` déclarée (elles valent donc
+      # toutes 0). C'est un choix : une position est FIGÉE — la changer est un conflit
+      # qui bloque l'import entier chez qui détient la version précédente — et aucun
+      # classement de langues ne mérite d'être gravé, les écarts en bas de liste tenant
+      # dans quelques centièmes de point et bougeant à chaque édition de la mesure.
+      # L'alphabet, lui, ne périme pas : on trouve une langue là où on l'attend, ce qui
+      # compte d'autant plus avec 25 entrées. `fr` est le défaut, donc présélectionné.
       #
-      # Les rangs sont un instantané, pas une vérité stable — les écarts sous la 5e
-      # place tiennent dans quelques dixièmes de point et bougent d'une édition à
-      # l'autre. Ils sont ici pour donner un ordre lisible, pas pour faire autorité.
-      # Ajouter une langue plus tard est ADDITIF (nouvelle allowed_value + bump de
-      # version). En RETIRER une, ou changer une `position`, est un CONFLIT qui bloque
-      # l'import entier chez qui a déjà la version précédente : cet ordre est définitif.
+      # Ajouter une langue plus tard reste ADDITIF (nouvelle allowed_value + bump de
+      # version), à insérer à sa place alphabétique ; en RETIRER une est un conflit.
       - slug: culture
         label: "Culture — langue de rédaction du prompt"
         type: restricted_list
         required: true
         default: fr
         allowed_values:
-          - { slug: en, label: "Anglais",     position: 0 }
-          - { slug: es, label: "Espagnol",    position: 1 }
-          - { slug: de, label: "Allemand",    position: 2 }
-          - { slug: ja, label: "Japonais",    position: 3 }
-          - { slug: fr, label: "Français",    position: 4 }
-          - { slug: ru, label: "Russe",       position: 5 }
-          - { slug: pt, label: "Portugais",   position: 6 }
-          - { slug: it, label: "Italien",     position: 7 }
-          - { slug: nl, label: "Néerlandais", position: 8 }
-          - { slug: pl, label: "Polonais",    position: 9 }
-          - { slug: tr, label: "Turc",        position: 10 }
-          - { slug: fa, label: "Persan",      position: 11 }
-          - { slug: zh, label: "Chinois",     position: 12 }
-          - { slug: vi, label: "Vietnamien",  position: 13 }
-          - { slug: id, label: "Indonésien",  position: 14 }
+          - { slug: de, label: "Allemand" }
+          - { slug: en, label: "Anglais" }
+          - { slug: ar, label: "Arabe" }
+          - { slug: zh, label: "Chinois" }
+          - { slug: ko, label: "Coréen" }
+          - { slug: da, label: "Danois" }
+          - { slug: es, label: "Espagnol" }
+          - { slug: fr, label: "Français" }
+          - { slug: el, label: "Grec" }
+          - { slug: he, label: "Hébreu" }
+          - { slug: hu, label: "Hongrois" }
+          - { slug: id, label: "Indonésien" }
+          - { slug: it, label: "Italien" }
+          - { slug: ja, label: "Japonais" }
+          - { slug: nl, label: "Néerlandais" }
+          - { slug: fa, label: "Persan" }
+          - { slug: pl, label: "Polonais" }
+          - { slug: pt, label: "Portugais" }
+          - { slug: ro, label: "Roumain" }
+          - { slug: ru, label: "Russe" }
+          - { slug: sv, label: "Suédois" }
+          - { slug: cs, label: "Tchèque" }
+          - { slug: tr, label: "Turc" }
+          - { slug: uk, label: "Ukrainien" }
+          - { slug: vi, label: "Vietnamien" }
 
       # À quoi sert ce prompt et dans quelles phases il a vocation à être branché.
       # Se lit AVANT le corps, par quelqu'un qui cherche s'il doit en écrire un nouveau.
