@@ -1,0 +1,113 @@
+# Docflow/templates/prompts.yaml — v1
+# Template docflow « Prompts » : référentiel rédactionnel des prompts épinglés par le
+# service workflow. Un document = un prompt ; son CORPS MARKDOWN est le prompt lui-même.
+# Structure clonée dans un workspace par l'import (cible pressentie : bloc Prompts de
+# `globals`). Idempotent, additive, versionnée. Aucun UUID : tout est par slug.
+# Cf. Docflow/templates/CLAUDE.md pour le contrat complet.
+#
+# ─── Répartition des responsabilités (décision actée) ────────────────────────────
+# Le RÉFÉRENTIEL WORKFLOW fait autorité sur l'identité du prompt : `slug` figé à la
+# création, `categorie` (generateur / dod / execution), `version`, `culture`. Les
+# définitions de workflow référencent ce slug, et le document docflow est ÉPINGLÉ PAR
+# RÉFÉRENCE depuis le prompt — jamais retrouvé par son titre.
+#
+# Conséquences directes, et raison d'être de la maigreur de ce template :
+#   • aucune clé d'identification ici — le titre reste librement modifiable ;
+#   • ni `categorie` ni `version` : les dupliquer créerait deux sources de vérité vouées
+#     à diverger. Le bruit du sélecteur de pages se règle par un filtre sur le TYPE
+#     FONCTIONNEL `prompt`, pas par un filtre sur la catégorie.
+#
+# `culture` fait EXCEPTION et figure bien ici : ce n'est pas une clé d'identification
+# recopiée, c'est un attribut INTRINSÈQUE du texte — une page est écrite dans une langue,
+# et le sélecteur de pages doit pouvoir distinguer les deux versions d'un même prompt.
+# Le référentiel workflow porte la culture de l'ENTRÉE, ce template porte la langue du
+# TEXTE : au moment de l'épinglage, les deux doivent coïncider.
+#
+# Tension assumée : on perd le filtrage par catégorie dans le sélecteur. Si le besoin se
+# révèle réel à l'usage, le rouvrir explicitement plutôt que de dupliquer l'attribut par
+# précaution.
+#
+# ─── Pourquoi PAS de content_template ────────────────────────────────────────────
+# Le corps du document est consommé VERBATIM comme prompt. Un squelette de sections
+# (« ## Contexte », « ## Objectif ») serait injecté tel quel dans l'appel au modèle.
+# Le contexte rédactionnel vit donc dans les propriétés `usage` et
+# `variables_attendues`, à CÔTÉ du corps, jamais dedans.
+version: 1
+template: prompts
+label: "Référentiel de prompts (prompt)"
+
+functional_types:
+
+  # ─── PROMPT : racine du bloc, un document = un prompt épinglable ───
+  # Pas de hiérarchie : un bloc Prompts est une LISTE PLATE. Les variantes d'un même
+  # prompt (culture, version) sont des entrées du référentiel workflow, pas des enfants.
+  - slug: prompt
+    parent: null
+    label: Prompt
+    properties:
+
+      # État RÉDACTIONNEL, usage docflow uniquement. Ne pilote rien côté workflow :
+      # c'est l'épinglage depuis le référentiel qui met un prompt en service, pas ce
+      # statut. Il dit « ce texte est-il prêt à être épinglé ? », rien de plus.
+      - slug: statut
+        label: "Statut — ce texte est-il prêt à être épinglé ?"
+        type: restricted_list
+        required: true
+        default: brouillon
+        allowed_values:
+          - { slug: brouillon, label: "Brouillon", position: 0, color: "#0EA5E9" }
+          - { slug: actif,     label: "Actif",     position: 1, color: "#22C55E" }
+          - { slug: deprecie,  label: "Déprécié",  position: 2, color: "#6B7280" }
+
+      # Placeholders `{clé}` que le corps suppose résolus au moment du rendu. Texte
+      # libre volontairement : la liste fait foi côté workflow (résolution effective),
+      # ici elle sert au rédacteur — un prompt dont on ignore les entrées est inéditable.
+      - slug: variables_attendues
+        label: "Variables attendues (placeholders {clé})"
+        type: text
+        required: false
+
+      # Langue du TEXTE porté par ce document — pas la culture de l'entrée du référentiel,
+      # même si les deux doivent coïncider à l'épinglage. Deux langues d'un même prompt =
+      # deux documents, distingués ici plutôt que par une convention de titre.
+      #
+      # Jeu de valeurs : les DIX LANGUES LES PLUS PARLÉES au monde (locuteurs natifs +
+      # seconde langue), dans cet ordre de rang. Clés en ISO 639-1 sur deux lettres —
+      # même convention que la culture des templates Jinja du portail (`^[a-z]{2}$`).
+      # `fr` est le défaut (langue de rédaction usuelle ici), pas le premier de la liste :
+      # l'ordre dit le rang, le défaut dit l'usage.
+      #
+      # Ajouter une langue plus tard est ADDITIF (nouvelle allowed_value + bump de
+      # version). En RETIRER une, ou changer une `position`, est un CONFLIT qui bloque
+      # l'import entier chez qui a déjà la version précédente : cet ordre est définitif.
+      - slug: culture
+        label: "Culture — langue de rédaction du prompt"
+        type: restricted_list
+        required: true
+        default: fr
+        allowed_values:
+          - { slug: en, label: "Anglais",          position: 0 }
+          - { slug: zh, label: "Chinois mandarin", position: 1 }
+          - { slug: hi, label: "Hindi",            position: 2 }
+          - { slug: es, label: "Espagnol",         position: 3 }
+          - { slug: ar, label: "Arabe",            position: 4 }
+          - { slug: fr, label: "Français",         position: 5 }
+          - { slug: bn, label: "Bengali",          position: 6 }
+          - { slug: pt, label: "Portugais",        position: 7 }
+          - { slug: ru, label: "Russe",            position: 8 }
+          - { slug: ur, label: "Ourdou",           position: 9 }
+
+      # À quoi sert ce prompt et dans quelles phases il a vocation à être branché.
+      # Se lit AVANT le corps, par quelqu'un qui cherche s'il doit en écrire un nouveau.
+      - slug: usage
+        label: "Usage — à quoi sert ce prompt, où il se branche"
+        type: text
+        required: false
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# Rappel (non modélisé ici) : ce template ne référence RIEN et n'est référencé par
+# aucun autre template. Le lien prompt ↔ définition de workflow est porté par le
+# référentiel workflow (épinglage par référence vers le document). Ne jamais stocker
+# la relation en sens inverse ici — « quelles définitions utilisent ce prompt ? » se
+# lit côté workflow, à la demande.
+# ─────────────────────────────────────────────────────────────────────────────────
