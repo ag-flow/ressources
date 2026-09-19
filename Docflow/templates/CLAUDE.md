@@ -41,19 +41,23 @@ TypeDef(
   abstract: bool = false,       # true = socle réutilisable, jamais matérialisé en base
   inherit: str | null,          # slug d'un autre TypeDef du MÊME fichier
   parent: str | null,           # slug du type parent (hiérarchie documentaire), null = racine
-  content_template: str | null, # squelette markdown — voir "Écarts connus" : INERTE à l'import
+  content_template: str | null, # squelette markdown — REPRIS par l'import (voir plus bas)
   properties: [PropDef] = []
 )
 
 PropDef(
-  slug: str, label: str,
-  type: "text" | "int" | "restricted_list" | "date" | "bool" | "reference",
-  # ⚠ PAS "url" / "float" malgré 34_MPTS — voir "Écarts connus"
+  slug: str, label: str,        # `label` est REQUIS — une propriété sans label fait échouer le fichier
+  type: "text" | "int" | "restricted_list" | "date" | "bool" | "url" | "float" | "reference",
   required: bool = false,
   default: str | null,
+  behavior: "auto_now" | "auto_now_create" | null,
+                                # RÉSERVÉ au type date : le serveur tient la valeur
+                                # (auto_now = à chaque enregistrement, auto_now_create = à la
+                                # création). Sur tout autre type, le modèle refuse le fichier.
   constraints: [{ kind: str, value: str, message: str? }] = [],
   allowed_values: [{ slug: str, label: str, position: int = 0, color: str? }] = [],
-  target_type: str | null,      # slug de type cible, PROPRIÉTÉS reference uniquement
+  target_type: str | null,      # slug de type cible, PROPRIÉTÉS reference uniquement —
+                                # résolu FAIL-FAST à l'import (voir la section reference)
   max_occurrences: int | null   # multi-valeur — voir "Écarts connus" : INERTE à l'import
 )
 ```
@@ -61,9 +65,12 @@ PropDef(
 `extra="forbid"` sur **tous** ces modèles : un champ inconnu (faute de frappe, ancien nom) fait
 **échouer le parsing entier** du fichier, pas juste ce champ. Vérifie l'orthographe exacte.
 
-Aucun champ n'a de contrainte de format sur `slug` au niveau du parsing pydantic — la discipline
-est **à ta charge**. Convention du reste de docflow (à respecter) : `^[a-z0-9][a-z0-9_-]*$`,
-minuscules, pas d'accent, pas d'espace.
+Les slugs de **type**, de **propriété** et d'**allowed_value** sont validés au parsing
+(`validate_slug`) : `^[a-z0-9][a-z0-9_-]*`, longueur 1–100 — un slug accentué, capitalisé ou
+commençant par un tiret fait échouer le fichier entier. Le slug du **template** lui-même
+(`template:`) n'est, lui, **pas** validé : tiens la même forme à la main. Et « validé » ne veut
+pas dire « correct » : la langue reste à ta charge — slugs en anglais, labels en français (voir
+les conventions de style).
 
 ## Héritage — résolu UNE FOIS à l'import, jamais stocké tel quel
 
@@ -87,15 +94,20 @@ minuscules, pas d'accent, pas d'espace.
 
 | `type` | forme stockée | contraintes valides (`kind`) | remarque |
 |---|---|---|---|
-| `text` | texte libre | `pattern` (regex), `min`/`max` non pertinents | `pattern` **réservé à `text`** — refusé ailleurs |
-| `int` | entier | `min`, `max` (numérique) | |
-| `date` | ISO `YYYY-MM-DD` (jour seul, pas d'heure/fuseau) | `min`, `max` (bornes de date) | pas de `datetime` — hors périmètre |
+| `text` | texte libre | `pattern` (regex), `min_length`, `max_length` | ces trois-là sont **réservés à `text`** |
+| `int` | entier | `min`, `max` | |
+| `float` | décimal | `min`, `max` | |
+| `date` | ISO `YYYY-MM-DD` | `min`, `max` (bornes de date) | un timestamp ISO est accepté et **tronqué au jour** ; ni heure ni fuseau stockés |
+| `url` | URL absolue | aucune | scheme `http`/`https` **et** hôte requis — une URL relative est refusée |
 | `bool` | `"true"` / `"false"` littéral strict | aucune | `"1"`/`"oui"` sont **rejetés**, pas coercés |
 | `restricted_list` | référence à une `allowed_values[].slug` | — | `default` doit être un `slug` déclaré dans `allowed_values` |
 | `reference` | UUID d'un autre document | — | voir section dédiée ci-dessous |
 
-`pattern` sur autre chose que `text` fait échouer la validation applicative à l'usage (pas au
-parsing du template). Ne le mets jamais sur `int`/`date`/`bool`/`reference`.
+Une contrainte posée sur un type qui ne l'accepte pas est **refusée en 422 à la déclaration**
+(`pattern`/`min_length`/`max_length` hors `text`, `min`/`max` hors `int`/`float`/`date`), et un
+opérande illisible l'est aussi (`max_length: "beaucoup"`, regex non compilable) : une borne qu'on
+ne sait pas relire ne protège rien. Le `message` déclaré remplace le message par défaut au moment
+où la valeur est refusée — écris-le du point de vue du rédacteur, pas du modèle.
 
 `allowed_values[].color` : pas de contrainte de format imposée, mais **réutilise la palette déjà
 en usage** dans les templates existants plutôt que d'inventer de nouvelles teintes (cohérence
@@ -128,9 +140,10 @@ visuelle avec le thème shadcn/Tailwind du front) :
   `parent: null`, sans propriété `statut` (pas de cycle de vie utile pour une fiche annuaire).
 - Un template qui a besoin d'une cible définie dans un **autre** template (ex. le point de
   jonction métier↔dev d'`agile-basic.yaml`, où un type `strategie-metier.yaml` référence `epic`)
-  reste valide **à condition que le workspace cible ait déjà importé les deux templates** avant
-  l'affectation — l'import ne vérifie la résolution de `target_type` qu'à l'écriture d'une valeur,
-  pas à l'import de structure.
+  n'est importable **qu'une fois l'autre template déjà en place dans le workspace** : l'import
+  valide désormais **fail-fast** que chaque `target_type` résout vers un type du même fichier ou
+  déjà présent côté workspace, et **refuse le lot entier** sinon. L'ordre d'import n'est donc plus
+  un détail de confort : le template référencé passe en premier.
 
 ## Multi-valeur (`max_occurrences`)
 
@@ -161,6 +174,11 @@ content_template: |
 
 Seules variables substituées : **`{{title}}`** (titre saisi à la création) et **`{{date}}`**
 (date du jour, ISO). Substitution **une seule fois**, à la création, jamais de liaison vivante.
+
+Le champ est bien **repris par l'import** : il est écrit à la création du type, et un `UPDATE`
+en `COALESCE` le met à jour quand le template en fournit un — un template muet sur
+`content_template` ne l'efface donc pas. Côté diff, un modèle de contenu modifié est une **maj
+douce**, pas un conflit.
 Style observé dans les templates existants : titre `# {{title}}`, une ligne de contexte en
 citation (`> …`), sections `##` vides prêtes à remplir, listes à cocher `- [ ] …` pour les items
 actionnables. Reste cohérent avec ce style pour les nouveaux templates.
@@ -182,6 +200,9 @@ tableau ci-dessous est la logique exacte du moteur de diff (vérifié dans
 | une `constraint` existante modifiée (valeur ou message) | **conflit** | import bloqué en entier |
 | `position` ou `color` d'une `allowed_value` modifiée | **conflit** | import bloqué en entier |
 | `parent` d'un type modifié | **conflit** | import bloqué en entier |
+| `behavior` d'une propriété modifié | **conflit** | import bloqué en entier |
+| `target_type` d'une propriété modifié | **conflit** | import bloqué en entier |
+| `content_template` d'un type modifié | **maj douce** | appliqué (COALESCE : template muet = pas d'effacement) |
 | élément retiré du template | **ignoré** | jamais de suppression automatique |
 
 **Un seul conflit dans le lot bloque l'import entier** (rien n'est écrit, y compris les ajouts
@@ -190,10 +211,10 @@ tableau, ce n'est **pas une nouvelle version du même fichier** — c'est un **n
 (nouveau fichier, nouveau slug dans `toc.txt`). Ne bump jamais la version pour un changement qui
 tomberait en conflit — ça casse l'import pour tout workspace qui a déjà cette version en place.
 
-`target_type` et `max_occurrences` ne sont **pas encore comparés par le diff** (voir écart connu
-ci-dessous) : les faire évoluer sur une propriété déjà publiée ne sera ni appliqué ni détecté en
-conflit aujourd'hui. Traite-les comme les autres champs structurels par prudence : ne les change
-jamais sur un slug déjà publié, publie un nouveau type si besoin.
+`max_occurrences` reste le seul champ **pas comparé par le diff** (voir écart connu ci-dessous) :
+le faire évoluer sur une propriété déjà publiée ne sera ni appliqué ni détecté en conflit. Traite-le
+comme les autres champs structurels par prudence : ne le change jamais sur un slug déjà publié,
+publie un nouveau type si besoin.
 
 ## Écarts connus entre la spec et l'implémentation actuelle de l'import
 
@@ -202,27 +223,21 @@ retravailles ce fichier après une évolution du backend — ce ne sont **pas** 
 respecter dans tes templates, ce sont des **limites actuelles à connaître** pour ne pas promettre
 un comportement qui n'existe pas encore :
 
-- **`content_template` n'est pas repris par l'import.** Le champ est parsé, mais l'`INSERT` du
-  type fonctionnel n'écrit pas cette colonne — c'est un choix documenté (décision actée : modèle
-  de contenu édité en UI, pas embarqué dans le paquet d'import v1). Écris-le quand même dans le
-  template (documentation vivante, reprise manuelle possible plus tard côté UI), mais **ne
-  promets pas** qu'un import de galerie pré-remplit le corps des documents.
-- **`target_type` n'est pas encore reporté en base par l'import.** Une propriété `reference` est
-  bien créée, mais sans restriction de cible (`target_functional_type_ref` reste `NULL`) — la
-  cible reste **libre** en pratique tant que ce n'est pas câblé, même si `target_type` est
-  renseigné dans le YAML. Continue à le déclarer correctement (c'est la bonne pratique dès que
-  l'import sera complété), mais ne le vends pas comme filtrant déjà le picker après un import de
-  galerie.
 - **`max_occurrences` n'a aucune colonne ni effet runtime.** Le multi-valeur (`39_MMV`) n'est pas
   implémenté côté stockage — déclarer `max_occurrences > 1` est accepté par le parsing mais n'a
-  aujourd'hui aucun effet observable après import.
-- **`type: url` et `type: float` ne sont pas acceptés par le modèle d'import** (`Literal` limité à
-  `text`/`int`/`restricted_list`/`date`/`bool`/`reference`), alors que le moteur de validation des
-  valeurs de propriété les supporte déjà en interne. Un template qui déclare `type: url` ou
-  `type: float` sur une propriété **échoue au parsing**, avant même d'atteindre le diff. Ne les
-  utilise pas tant que ce n'est pas corrigé côté import.
+  aujourd'hui aucun effet observable après import, et le diff ne le compare pas.
 
-Si l'un de ces écarts est comblé côté backend, mets à jour cette section en conséquence.
+Trois écarts listés ici auparavant sont **comblés** (vérifié le 2026-09-19 dans
+`backend/src/docflow/templates/` : `models.py`, `importer.py`, `diff.py`) — ne réécris pas des
+templates pour les contourner :
+
+- `content_template` **est** repris par l'import (écrit à la création, `COALESCE` à la mise à jour) ;
+- `target_type` **est** reporté en base (`target_functional_type_ref`) et validé fail-fast à
+  l'import : une cible qui ne résout pas fait échouer le lot entier ;
+- `type: url` et `type: float` **sont** acceptés par le modèle d'import, au même titre que le
+  moteur de validation des valeurs.
+
+Si l'un des écarts restants est comblé côté backend, mets à jour cette section en conséquence.
 
 ## Conventions de style observées (à reproduire)
 
@@ -274,7 +289,8 @@ Si l'un de ces écarts est comblé côté backend, mets à jour cette section en
 - [ ] Chaînes `inherit` acycliques ; overrides = remplacement complet assumé (pas de fusion).
 - [ ] `pattern` uniquement sur des propriétés `type: text`.
 - [ ] `default` d'une `restricted_list` correspond à un `slug` déclaré dans `allowed_values`.
-- [ ] Pas de `type: url` / `type: float` (non supportés par l'import actuel).
+- [ ] `behavior` uniquement sur des propriétés `type: date` ; `pattern`/`min_length`/`max_length`
+      uniquement sur `type: text` ; `min`/`max` uniquement sur `int`/`float`/`date`.
 - [ ] Chaque type à statut a **son propre** pipeline d'`allowed_values`, jamais partagé cross-type.
 - [ ] `content_template` (si présent) suit le style `# {{title}}` / `> … {{date}}` / sections `##`.
 - [ ] `template:` interne == nom du fichier == entrée ajoutée dans `toc.txt`.
