@@ -670,6 +670,21 @@ les conventions de style).
 - `parent` (documentaire) ≠ `inherit` (schéma). Un type peut hériter de A tout en étant
   documentairement enfant de B. **Plusieurs types peuvent partager le même `parent`** (ex.
   `story` et `atdd` tous deux enfants de `feature`) — c'est un cas normal, pas une erreur.
+- **Ce que `parent` produit au runtime** (règle DOC-04, vérifiée dans `documents/service.py`) :
+  à la **racine d'un bloc**, le type d'un document doit être **le type du bloc** ; **sous un
+  parent**, il doit être un **fils direct** du type du parent. Un petit-fils n'est pas accepté
+  à deux niveaux d'écart — la chaîne de types déclarée **est** la profondeur de l'arbre.
+- **Un type ne peut pas être son propre parent.** C'est le réflexe naturel pour un arbre de
+  profondeur libre, et il échoue en deux temps, sans rien signaler la première fois :
+  l'import insère le type **avant** de connaître son propre identifiant, donc avec
+  `parent = NULL` ; puis **chaque réimport** compare `NULL` au `parent` déclaré, y voit un
+  `parent` modifié — un **conflit** — et **bloque le lot entier**, définitivement. Un arbre
+  récursif n'est donc pas exprimable par un template de galerie : borne la profondeur par une
+  chaîne de types, ou fais évoluer l'importeur côté docflow.
+- **Changer le type d'un document purge** les valeurs des propriétés que le nouveau type ne
+  porte pas (`_purge_orphan_property_values`). Un « déclassement » ou une promotion d'un type
+  vers un autre ne conserve que les slugs communs : quand deux types sont destinés à ce genre
+  de bascule, donne le même slug aux propriétés qui ont le même sens.
 - La base ne connaît **que des types concrets à plat** : `inherit`/`abstract` n'existent pas en
   SQL, uniquement dans le YAML source.
 

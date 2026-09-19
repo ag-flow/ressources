@@ -48,8 +48,10 @@
 # fois et les deux divergeraient.
 #
 # Pourquoi DEUX NIVEAUX et pas un type récursif sur lui-même : la hiérarchie docflow
-# donne à un type UN slug de parent — un type qui se déclarerait son propre parent
-# n'aurait plus de racine créable. Deux niveaux suffisent d'ailleurs au besoin réel :
+# donne à un type UN slug de parent, et un type qui se déclarerait son propre parent
+# n'est pas importable — l'import l'insère avec `parent = NULL` (son identifiant n'existe
+# pas encore au moment de l'INSERT), puis tout réimport voit un `parent` modifié, donc un
+# CONFLIT qui bloque le lot entier. Deux niveaux suffisent d'ailleurs au besoin réel :
 # on traduit depuis la source, jamais depuis une traduction (traduire une traduction
 # accumule les dérives sans que personne ne puisse les arbitrer). Si un jour une
 # traduction devient la référence d'une famille, elle est promue en `prompt` source.
