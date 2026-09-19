@@ -1,0 +1,140 @@
+# Docflow/templates/modele-de-donnees.yaml — v1
+# Template docflow « Modèle de données » : décrit un modèle LOGIQUE de données —
+# un document contexte (`model`) et ses entités enfants (`entity`).
+# Suite de l'épic MLD du dépôt `doc` (lot F8), livré ici parce que la convention du
+# projet est la GALERIE (`Docflow/templates/` + entrée dans `toc.txt`), pas un
+# répertoire local du backend. Cf. Docflow/templates/CLAUDE.md pour le contrat complet.
+#
+# ─── Séparation structurante : contexte vs sémantique ────────────────────────────
+#   model   → le document contexte, qui porte la MISE EN PAGE du diagramme
+#   entity  → ses documents enfants, qui portent la SÉMANTIQUE (champs, relations)
+#
+# `entity` est ENFANT de `model` : c'est l'arborescence documentaire qui porte
+# l'appartenance au modèle, jamais la mise en page. Un déplacement de boîte dans le
+# diagramme ne doit pas pouvoir changer ce qu'une entité signifie.
+#
+# La grammaire du CORPS de ces documents est portée par le type de CONTENU, qui est
+# indépendant du type fonctionnel : `model-layout` pour le contexte, `table-schema`
+# pour les entités. Ce template ne décrit que le sens métier, pas le corps.
+#
+# ─── Vocabulaire : deux choix imposés par le cadrage ─────────────────────────────
+#   • ENTITÉ, PAS TABLE — on décrit un modèle logique, pas un schéma physique.
+#     Nommer le type « table » inviterait à y penser en SGBD, ce que la grammaire
+#     `table-schema` refuse déjà (types logiques : `string`, jamais `varchar(255)`).
+#   • ON ÉVITE `context` — le mot est déjà pris par le vocabulaire des workflows ;
+#     deux sens sous un même mot rendraient les deux illisibles.
+#
+# Les slugs sont en ANGLAIS (`model`, `entity`, `status`…), les labels en français,
+# conformément à la convention du dépôt — voir CLAUDE.md §8.10. Le ticket d'origine
+# les proposait en français (`modele`, `entite`, `statut`) ; l'anglicisation préserve
+# les deux contraintes de cadrage ci-dessus (`entity` n'est pas `table`, `model` n'est
+# pas `context`) et ne touche qu'à la langue. Seul le SLUG DE TEMPLATE reste
+# `modele-de-donnees` : c'est une adresse de galerie déjà citée hors de ce dépôt.
+#
+# ─── Briques utilisées ───────────────────────────────────────────────────────────
+#   type date + `behavior: auto_now` — la date de mise à jour est tenue par le
+#   serveur, pas par le rédacteur : une date de fraîcheur que quelqu'un doit penser
+#   à corriger à la main est une date fausse le jour où elle compte.
+#   contraintes `max_length` (texte) et `min` (entier) — vérifiées à l'écriture de la
+#   valeur, avec le message déclaré ici.
+version: 1
+template: modele-de-donnees
+label: Modèle de données
+
+functional_types:
+
+  # ─── MODEL : le document contexte, racine du bloc ───
+  # Porte l'identité du modèle et sa mise en page ; jamais le détail des entités.
+  - slug: model
+    label: Modèle de données
+    properties:
+
+      # Cycle de vie du MODÈLE dans son ensemble. Pipeline propre à ce type — celui
+      # d'une entité est plus court, une entité ne passe pas en revue toute seule.
+      - slug: status
+        label: Statut
+        type: restricted_list
+        required: true
+        default: draft
+        allowed_values:
+          - { slug: draft,     label: "Brouillon", position: 0, color: "#9AA3AF" }
+          - { slug: in_review, label: "En revue",  position: 1, color: "#F59E0B" }
+          - { slug: validated, label: "Validé",    position: 2, color: "#22C55E" }
+          - { slug: obsolete,  label: "Obsolète",  position: 3, color: "#6B7280" }
+
+      # Périmètre métier couvert par le modèle. Borné à 80 caractères : c'est un
+      # intitulé de domaine, pas un résumé — au-delà, le corps du document est le
+      # bon endroit.
+      - slug: domain
+        label: Domaine fonctionnel
+        type: text
+        constraints:
+          - kind: max_length
+            value: "80"
+            message: 80 caractères au maximum.
+
+      # Qui répond des choix de modélisation. Texte libre volontairement : un
+      # annuaire de personnes appartiendrait à un autre template, et une référence
+      # vers un type absent ferait échouer l'import (le target_type est résolu
+      # fail-fast).
+      - slug: owner
+        label: Propriétaire
+        type: text
+
+      # Fraîcheur du modèle, tenue par le serveur à chaque enregistrement.
+      - slug: updated_at
+        label: Mis à jour le
+        type: date
+        behavior: auto_now
+
+  # ─── ENTITY : une entité du modèle (document enfant) ───
+  # Porte la sémantique. Son corps suit la grammaire `table-schema`.
+  - slug: entity
+    label: Entité
+    parent: model
+    properties:
+
+      # Pipeline PROPRE à l'entité : pas d'étape de revue ici — c'est le modèle
+      # qu'on passe en revue, entité par entité, pas l'inverse.
+      - slug: status
+        label: Statut
+        type: restricted_list
+        required: true
+        default: draft
+        allowed_values:
+          - { slug: draft,     label: "Brouillon", position: 0, color: "#9AA3AF" }
+          - { slug: validated, label: "Validée",   position: 1, color: "#22C55E" }
+          - { slug: obsolete,  label: "Obsolète",  position: 2, color: "#6B7280" }
+
+      # Rôle de l'entité dans le modèle. Facultative : une entité dont on ignore
+      # encore la nature reste une entité, et forcer un choix prématuré produirait
+      # surtout des « principale » par défaut.
+      - slug: nature
+        label: Nature
+        type: restricted_list
+        allowed_values:
+          - { slug: main,        label: "Entité principale",   position: 0 }
+          - { slug: reference,   label: "Table de référence",  position: 1 }
+          - { slug: association, label: "Table d'association", position: 2 }
+          - { slug: technical,   label: "Entité technique",    position: 3 }
+
+      # Ce qui identifie une occurrence pour le métier — distinct de la clé
+      # technique, qui relève du schéma physique et n'a pas sa place ici.
+      - slug: natural_key
+        label: Clé naturelle
+        type: text
+
+      # Ordre de grandeur, pas un comptage : sert à arbitrer index et volumétrie de
+      # stockage au moment du passage au physique.
+      - slug: estimated_volume
+        label: Volumétrie estimée
+        type: int
+        constraints:
+          - kind: min
+            value: "0"
+            message: Une volumétrie ne peut pas être négative.
+
+      - slug: updated_at
+        label: Mis à jour le
+        type: date
+        behavior: auto_now
