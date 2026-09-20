@@ -1,13 +1,22 @@
-# templates/knowledge-base.yaml — v1
+# templates/knowledge-base.yaml — v2
 # Base de connaissance d'une application.
-# Couvre : articles généraux, FAQ, runbooks opérationnels, ADR, notes de version.
+# Couvre : articles généraux, FAQ, runbooks opérationnels, ADR, notes de version,
+#          et la trace d'exécution d'un workflow (framing → step → item).
 # Hiérarchie : section → article / faq / runbook / adr  (release_note = racine)
+#              framing → framing_step → framing_item    (framing = racine de son bloc)
 #
 # Briques utilisées :
 #   - types scalaires date / bool ............... 34_MPTS
 #   - propriété reference (cible typée) ......... 38_MREL
 #   - modèle de contenu par type ................ 35_MTPL
-version: 1
+#
+# v2 — ajout STRICTEMENT ADDITIF de framing / framing_step / framing_item : trois types
+# neufs, aucune modification des types existants (cf. tableau de diff, §8.8 du CLAUDE.md).
+# Les slugs des nouveaux types et de leurs propriétés sont en ANGLAIS, conformément à la
+# convention du dépôt — les types antérieurs gardent leurs slugs français, qu'on ne renomme
+# pas : un renommage n'est pas additif, il laisserait des doublons dans tout workspace ayant
+# déjà importé la v1.
+version: 2
 template: knowledge-base
 label: "Base de connaissance applicative"
 
@@ -296,6 +305,115 @@ functional_types:
         label: "Remplacée par (ADR)"
         type: reference
         target_type: adr
+        required: false
+
+  # ─── FRAMING : trace d'exécution d'une instance de workflow ──────────────
+  # Racine de son bloc : un bloc de type `framing` accueille un document par instance.
+  # Le service workflow le crée au démarrage et le clôt à la fin — il n'écrit QUE les deux
+  # propriétés ci-dessous, la matière est déposée par l'agent.
+  #
+  # Pas de `parent` : un framing ne peut pas être enfant d'un framing (un type ne peut pas
+  # être son propre parent — §8.3). Le framing d'une sous-instance vit donc à la racine, et
+  # la parenté se lit dans son titre, qui porte le nom dérivé `<parent>/<sous-workflow>`.
+  - slug: framing
+    inherit: section
+    parent: null
+    label: "Cadrage d'instance"
+    content_template: |
+      # {{title}}
+
+      > Instance de workflow · ouverte le {{date}}
+
+      ## Pourquoi cette instance existe
+
+      <!-- Repris du brief transmis au démarrage -->
+
+      ## Étapes
+
+      <!-- Les étapes et leurs livrables sont créés par le service au fil des phases -->
+    properties:
+      - slug: state
+        label: "État"
+        type: restricted_list
+        required: true
+        default: in_progress
+        allowed_values:
+          - { slug: in_progress, label: "En cours", position: 0, color: "#F59E0B" }
+          - { slug: closed,      label: "Clos",     position: 1, color: "#6B7280" }
+      - slug: instance
+        label: "Nom de l'instance"
+        type: text
+        required: true
+
+  # ─── FRAMING_STEP : une phase traversée ──────────────────────────────────
+  # Créé par le service à l'ENTRÉE dans la phase, jamais à l'avance : la trace ne doit ni
+  # devancer la progression, ni la suivre de loin. Une phase retraversée (retour arrière)
+  # réutilise son step et le marque `revisited` — jamais de second step pour la même phase.
+  # Pas d'`inherit: base_editorial` : un step n'a pas de cycle ÉDITORIAL (brouillon → publié).
+  # Son cycle de vie est porté par le service, qui sait seul si la phase a été traversée, et
+  # la checklist du dépôt interdit un pipeline de statut partagé entre types.
+  - slug: framing_step
+    parent: framing
+    label: "Étape (phase traversée)"
+    content_template: |
+      # {{title}}
+
+      > Phase traversée le {{date}}
+
+      ## Ce qui s'est joué dans cette phase
+    properties:
+      - slug: phase
+        label: "Identifiant de phase"
+        type: text
+        required: true
+      - slug: revisited
+        label: "Phase retraversée"
+        type: bool
+        required: false
+        default: "false"
+      - slug: gate_validated_by
+        label: "Gate validée par"
+        type: text
+        required: false
+      - slug: gate_note
+        label: "Note de la gate"
+        type: text
+        required: false
+
+  # ─── FRAMING_ITEM : un livrable attendu ──────────────────────────────────
+  # Un item par livrable attendu de la phase, SANS exception — y compris pour une action
+  # non essentielle, et un seul pour une action en boucle. C'est cette uniformité qui rend
+  # lisible, dans la trace, ce qui a été produit et ce qui manque.
+  #
+  # L'item ne recopie PAS la définition : il porte une clé de tâche, que le service résout
+  # en prompts, DoD et contraintes (`workflow__task_brief`). Seul l'intitulé est recopié,
+  # comme affichage — sans lui, la trace relue dans six mois n'est qu'une liste de clés.
+  # Sans `inherit` non plus, pour la même raison : ce qu'on veut lire sur un item, c'est ce
+  # qui a été produit — pas un statut de publication qui doublerait l'état réel de la tâche,
+  # lequel fait autorité côté service.
+  - slug: framing_item
+    parent: framing_step
+    label: "Livrable attendu"
+    content_template: |
+      # {{title}}
+
+      > Livrable attendu · préparé le {{date}}
+
+      ## Résultat
+
+      <!-- Le produit de la tâche, ou un lien vers lui s'il vit ailleurs -->
+    properties:
+      - slug: task_key
+        label: "Clé de tâche"
+        type: text
+        required: true
+      - slug: task_label
+        label: "Intitulé de la tâche"
+        type: text
+        required: false
+      - slug: result_link
+        label: "Lien vers le résultat"
+        type: url
         required: false
 
   # ─── CONTRIBUTEUR : auteur / responsable (annuaire minimal) ──────────────
