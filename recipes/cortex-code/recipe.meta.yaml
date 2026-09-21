@@ -1,0 +1,16 @@
+id: cortex-code
+key: ec71651e-45c1-4365-8b86-87d1af6112ed
+version: 1.0.0
+description: "Install Snowflake Cortex Code (CoCo CLI) — MCP gateway devpod + connexion Snowflake par PAT (requiert Node.js)"
+type: install
+installs_after:
+  - 08d27187-d87f-4140-a65e-0891b59441f1
+requires_secrets:
+  - path: mcp/gateway_token
+    env: MCP_GATEWAY_TOKEN
+  - path: llm/snowflake_account
+    env: SNOWFLAKE_ACCOUNT
+  - path: llm/snowflake_user
+    env: SNOWFLAKE_USER
+  - path: llm/snowflake_pat
+    env: SNOWFLAKE_PAT
