@@ -16,6 +16,15 @@
 # convention du dépôt — les types antérieurs gardent leurs slugs français, qu'on ne renomme
 # pas : un renommage n'est pas additif, il laisserait des doublons dans tout workspace ayant
 # déjà importé la v1.
+#
+# v2 corrigée le 2026-09-21, AVANT toute publication (le serveur est resté en v1, donc
+# la version n'est pas bumpée : c'est la même v2 jamais parue qu'on rectifie). `instance`,
+# `phase` et `task_key` passent en `required: false`. Elles étaient obligatoires sans
+# default, ce qui faisait échouer en 422 la création même du document : le service crée
+# d'abord, pose les propriétés ensuite, et son connecteur `documents.create` n'a pas de
+# champ `properties`. Avec le fail-closed de la feature Framing, plus aucune instance de
+# workflow n'aurait démarré. `required` et `default` étant des champs CONFLIT au diff,
+# c'était la dernière occasion de le corriger sans casser un import.
 version: 2
 template: knowledge-base
 label: "Base de connaissance applicative"
@@ -343,7 +352,13 @@ functional_types:
       - slug: instance
         label: "Nom de l'instance"
         type: text
-        required: true
+        required: false
+        # `required: false` DELIBERE : le service cree le document puis pose la
+        # propriete (connecteur `documents.create`, sans champ properties). Une
+        # required sans default fait echouer la creation en 422
+        # (`assert_required_satisfied`), donc tout `workflow__start` via le
+        # fail-closed D-2. La garantie reste portee par le service, qui leve
+        # FramingWriteError si la pose echoue.
 
   # ─── FRAMING_STEP : une phase traversée ──────────────────────────────────
   # Créé par le service à l'ENTRÉE dans la phase, jamais à l'avance : la trace ne doit ni
@@ -365,7 +380,13 @@ functional_types:
       - slug: phase
         label: "Identifiant de phase"
         type: text
-        required: true
+        required: false
+        # `required: false` DELIBERE : le service cree le document puis pose la
+        # propriete (connecteur `documents.create`, sans champ properties). Une
+        # required sans default fait echouer la creation en 422
+        # (`assert_required_satisfied`), donc tout `workflow__start` via le
+        # fail-closed D-2. La garantie reste portee par le service, qui leve
+        # FramingWriteError si la pose echoue.
       - slug: revisited
         label: "Phase retraversée"
         type: bool
@@ -406,7 +427,13 @@ functional_types:
       - slug: task_key
         label: "Clé de tâche"
         type: text
-        required: true
+        required: false
+        # `required: false` DELIBERE : le service cree le document puis pose la
+        # propriete (connecteur `documents.create`, sans champ properties). Une
+        # required sans default fait echouer la creation en 422
+        # (`assert_required_satisfied`), donc tout `workflow__start` via le
+        # fail-closed D-2. La garantie reste portee par le service, qui leve
+        # FramingWriteError si la pose echoue.
       - slug: task_label
         label: "Intitulé de la tâche"
         type: text
