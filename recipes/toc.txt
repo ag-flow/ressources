@@ -4,6 +4,7 @@ ansible/
 claude-bypass-permissions/
 claude-code/
 claude-code-glm/
+cline/
 codex/
 copilot-cli/
 cpp/

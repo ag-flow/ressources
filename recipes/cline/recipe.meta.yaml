@@ -1,0 +1,14 @@
+id: cline
+key: 338409b0-a3c2-4364-877f-2418433bb693
+version: 1.0.0
+description: "Install Cline CLI — MCP gateway devpod + providers DeepSeek/GLM (requiert Node.js)"
+type: install
+installs_after:
+  - 08d27187-d87f-4140-a65e-0891b59441f1
+requires_secrets:
+  - path: llm/deepseek_api_key
+    env: DEEPSEEK_API_KEY
+  - path: llm/zai_api_key
+    env: ZAI_API_KEY
+  - path: mcp/gateway_token
+    env: MCP_GATEWAY_TOKEN
