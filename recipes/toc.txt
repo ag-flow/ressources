@@ -12,6 +12,7 @@ cpp/
 docker/
 dotnet/
 gemini-cli/
+gh/
 git/
 go/
 goose/

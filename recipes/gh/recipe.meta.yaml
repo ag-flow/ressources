@@ -1,0 +1,15 @@
+id: gh
+key: fe72714e-5b36-4d5b-ad29-767f3dd3afff
+version: 1.0.0
+description: "Install GitHub CLI (gh) — dépôt apt officiel cli.github.com, auth device-flow persistée"
+type: install
+options:
+  gh_version:
+    type: string
+    default: "latest"
+    description: "Version de gh à installer (latest | version apt exacte, ex. 2.62.0)"
+memory_volume:
+  name: gh-cli
+  optional: true
+  mapping:
+    target: /home/vscode/.config/gh
